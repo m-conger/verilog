@@ -101,3 +101,22 @@ Bunların dışında da veri tipleri bulunmaktadır. İlerleyen konularda incele
 
 
 ## Kontrol İfadeleri
+### 1. if-else
+Bir parça kodun yürütülüp yürütülmeyeceğini kontrol eder. Koşul sağlanıyorsa kod yürütülür, değilse kodun diğer kısmı koşulur.
+
+Örneğin:
+``` verilog
+if (enable == 1'b1) begin
+    data = 10;
+    adress = 16'hDEAD;
+    wr_enable = 1'b1;
+end else begin
+    data = 32'b0;
+    adress = adress + 1;
+end
+```
+
+(Begin ve end, C/C++'taki {} ifadesi gibi davranır. Yani ilgili kısmın çerçevesi denebilir.
+
+### 2. case
+Devam edecek..
