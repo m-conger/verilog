@@ -116,7 +116,7 @@ end else begin
 end
 ```
 
-(Begin ve end, C/C++'taki {} ifadesi gibi davranır. Yani ilgili kısmın çerçevesi denebilir.
+(Begin ve end, C/C++'taki {} ifadesi gibi davranır. Yani ilgili kısmın çerçevesi denebilir.)
 
 ### 2. case
 Devam edecek..
