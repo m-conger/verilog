@@ -119,4 +119,6 @@ end
 (Begin ve end, C/C++'taki {} ifadesi gibi davranır. Yani ilgili kısmın çerçevesi denebilir.)
 
 ### 2. case
+Case, bir değişkenin birden çok değer için kontrol edilmeye ihtiyacı varsa kullanılır.
+
 Devam edecek..
