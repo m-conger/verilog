@@ -121,3 +121,91 @@ end
 ### 2. case
 Case, bir değişkenin birden çok değer için kontrol edilmeye ihtiyacı varsa kullanılır.
 
+Örneğin:
+``` verilog
+case (address)
+    0 : $display ("It is 11:40PM");
+    1 : $display ("I am feeling sleepy");
+    2 : $display ("Let me skip this tutorial");
+    default : $display ("Need to complete");
+endcase
+```
+
+(If-else ifadesinde 'else' yoksa veya case ifadesinde 'default' yoksa ve kombinasyonel bir ifade yazacaksanız, sentez aracı "Latch" tercih eder. If-else ve case ifadeleri kombinasyonel lojik için tüm durumların kapsanmasına ihtiyaç duyar.)
+
+### 3. while döngüsü
+Normalde modellerde pek kullanılmaz ancak testbenchde sıkça kullanılır.
+
+Örneğin:
+``` verilog
+while (free_time) begin
+    $display ("Contiune with webpage development");
+end
+```
+
+Bu örnekte "free_time" değişkeni bir olduğu sürece begin ve end arasındaki kod gerçekleşecektir.
+
+Örnek 2:
+``` verilog
+module counter (clk, rst, enable, count);
+input clk, rst, enable;
+output [3:0] count;
+reg [3:0] count;
+
+always @(posedge clk or posedge rst)
+if (rst) begin
+    count <= 0;
+end else begin : COUNT
+    while (enable) begin
+        count <= count + 1;
+        disable COUNT;
+    end
+end
+
+endmodule
+```
+
+### for döngüsü
+Örneğin:
+``` verilog
+for (i = 0; i < 16; i = i+1) begin
+    $display ("Current value of i is %d", i);
+end
+```
+
+### Repeat (Tekrar)
+For döngüsüne benzer. Farklı olarak dışarıdan bir değişken belirtilir ve artırılır. Döngü bildirilirken kodun kaz kez çalıştırılacağı bildirilir ve değişken artırılmaz.
+
+Örneğin:
+``` verilog
+repeart (16) begin
+    $display ("Current value of i is %d", i)
+```
+
+(Verilen örnekteki gibi pek kullanılmaz.)
+
+
+## Değişken Ataması
+Dijital olarak iki tip eleman vardır. Kombinasyonel ve sıralı. Verilog iki yönlü kombinasyonel lojik ve tek yönlü sıralı lojik modeli destekler.
+
+* Kombinasyonel elemanlar `assing` (atama) ve `always` (her zaman) ifadeleriyle modellenebilir.
+* Sıralı elemanlar sadece `always` ifadeleriyle modellenebilir.
+* Üçüncü bir blok da sadece testbench için kullanılır. Buna ise initial block (başlangıç bloğu) denir.
+
+### Initial Block (Başlangıç Bloğu)
+Bir başlangıç bloğu sadece simülasyon başladığında gerçekleştirilir. Eğer birden fazla başlangıç bloğu var ise hepsi birden gerçekleştirilir.
+
+Örneğin:
+``` verilog
+initial begin
+    clk = 0;
+    reset = 0;
+    req_0 = 0;
+    req_1 = 0;
+end
+```
+
+(Verilen örnekte simülasyonun başında clk = 0 iken `begin` ve `end` bloğu arasındaki tüm değişkenler sıfır olarak sürülmektedir.)
+
+### always bloğu
+Devam edecek..
