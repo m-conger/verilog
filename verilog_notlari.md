@@ -121,4 +121,3 @@ end
 ### 2. case
 Case, bir değişkenin birden çok değer için kontrol edilmeye ihtiyacı varsa kullanılır.
 
-Devam edecek..
