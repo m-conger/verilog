@@ -2,7 +2,7 @@
 
 
 ## Tasarım Modelleri
-Verilog ile 4 tür modelde tasarım yapılabilir.
+Verilog ile 3 tür modelde tasarım yapılabilir.
 * Yapısal:      gate-level
 * Davranışsal:  always (Behavioral)
 * Dataflow:     assign
