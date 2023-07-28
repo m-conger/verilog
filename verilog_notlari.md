@@ -208,4 +208,65 @@ end
 (Verilen örnekte simülasyonun başında clk = 0 iken `begin` ve `end` bloğu arasındaki tüm değişkenler sıfır olarak sürülmektedir.)
 
 ### always bloğu
-Devam edecek..
+Initial bloğu sadece bir kez (simülasyon başında) gerçekleştirilirken always bloğu her zaman gerçekleştirilir. Diğer bir fark ise always bloğu bir `sensitive list` (hassasiyet listesi) içerebilir ve veya bununla ilgili bir `delay` (gecikme) içerebilir.
+
+(Sensetive list, always bloğuna kodun ne zaman gerçekleştirileceğini söyler.)
+
+Örneğin:
+``` verilog
+always @(a or b or sel)
+begin
+    y = 0;
+    if (sel == 0) begin
+        y = a;
+    end else begin
+        y = b;
+    end
+end
+```
+
+Verilen örnek 2x1 bir multiplexer (mux, çoklayıcı) yapısını ifade eder. Bu örnekte sensitive list a, b ve sel'dir.
+
+(Always bloğu için `wire` veri tipinde kullanılamaz fakat `reg` ve integer veri tiplerinde kullanılabilir.)
+
+İki tip sensitive list vardır. Bunlar seviye hassas (kombinasyonel devreler için) ve kenar hassas (flip-flop'lar için) sensitive list'lerdir.
+
+Örneğin:
+``` verilog
+always @(posedge clk)
+if (reset == 0) begin
+    y <= 0;
+end else if (sel == 0) begin
+    y <= a;
+end else begin
+    y <= b;
+end
+```
+
+Yukarıdaki örnek de bir 2x1 mux yapısıdır. Fakat y çıkışı artık bir flip-flop çıkışıdır. Altında yatan sebep sensitive list'inin kenar hassas tipte olmasından kaynaklıdır.
+
+Görüldüğü üzere kombinasyonel lojikte "=" operatörü kullanılırken sıralı blokta "<=" operatörü kullanılmaktadır. "=" ifadesi kodu begin-end arasında sıralı olarak gerçekleştirirken, "<=" ifadesi kodu paralel olarak gerçekleştirmektedir.
+
+Bir always bloğu sensitive list olmadan da kullanılabilir. Fakat bu durumda bir delay gereklidir.
+
+Örneğin:
+``` verilog
+always begin
+    #5 clk = ~clk;
+end
+```
+
+Verilen örnekteki "#5" ifadesi, diğer ifadenin gerçekleştirilmesini 5 zaman birimi kadar geciktirmektedir.
+
+### assign (atama) ifadesi
+Bir `assign` ifadesi sadece kombinasyonel lojiği modeller ve devamlı gerçekleştirir. Bu nedenle `assign` ifadesi continuous assignment statement (sürekli atama ifadesi) olarak adlandırılır ve sensitive list'i yoktur.
+
+Örneğin:
+``` verilog
+assign out = (enable) ? data : 1'bz;
+```
+
+Verilen örnek bir tri-state buffer (üç-durumlu arabellek) yapısını temsil eder. `enable` 1 olduğunda veri çıkışa sürülmektedir, değilse çıkış yüksek empedansa çekilmektedir. (Bir verinin yüksek empedanslı bir çevreye çekilmesi, sinyalin gücünü koruyarak daha doğru sonuçlar elde etmeye ve gürültüyü azaltmaya yarar.)
+
+
+## Görev & Fonksiyon
