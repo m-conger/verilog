@@ -270,3 +270,64 @@ Verilen örnek bir tri-state buffer (üç-durumlu arabellek) yapısını temsil 
 
 
 ## Görev & Fonksiyon
+Eğer daha önce kullanılan kodlar tekrar tekrar kullanılmak istenir ise adres tekrarlı kullanılmış kod yani task (görev) ve function (fonksiyon) verilog için desteklenmektedir.
+
+Örneğin:
+``` verilog
+function parity;
+input [31:0] data;
+integer i;
+begin
+    parity = 0;
+    for (i = 0; i < 32, i = i + 1) begin
+        parity = parity ^ data[i];
+    end
+end
+
+endfunction
+```
+
+Fonksiyonlar ve görevler aynı söz dizimine sahiptir. Tek fark task'lerde gecikmeler (delay) olabilir ancak fonksiyonların gecikmesi olamaz. Bu durum fonksiyonların kombinasyonel lojiği modellemek için kullanıldığını ifade eder. Diğer bir fark ise fonksiyonlar bir değer döndürebilirken task'ler değer döndüremez.
+
+
+## Test Bench
+Yazılan kodların belirtimlere (specifications) uygun çalışıp çalışmadığı test edilmelidir. Genel mantık girişlerin sürülmesi ve sürülen girişlere göre çıkışların beklenen değerlerle uyuşup uyuşmadığını kontrol etmektir.
+
+Örneğin:
+``` verilog
+module arbiter (
+    clock,
+    reset,
+    req_0,
+    req_1,
+    gnt_0,
+    gnt_1
+);
+
+input clock, reset, req_0, req_1;
+output gnt_0, gnt_1;
+
+reg gnt_0, gnt_1;
+
+always @(posedge clock or posedge reset)
+if (reset) begin
+    gnt_0 <= 0;
+    gnt_1 <= 0;
+end else if (req_0) begin
+    gnt_0 <= 1;
+    gnt_1 <= 0;
+end else if (req_1) begin
+    gnt_0 <= 0;
+    gnt_1 <= 1;
+end
+
+endmodule
+// testbench kodu buraya gelecek
+module arbiter_tb;
+
+reg clock, reset, req0, req1;
+wire gnt0, gnt1;
+
+initial begin
+    $monitor ("req0=)
+```
