@@ -98,6 +98,15 @@ Bunların dışında da veri tipleri bulunmaktadır. İlerleyen konularda incele
 |                         | <<               | Sola Kaydırma                     |
 | Concatenation (Bağlama) | {}               | Birbirine Bağlama (concatenation) |
 | Conditional (Koşul)     | ?                | Koşul (conditional)               |
+| Replication (Kopyalama) | {n{m}}           | Çoğaltma-Kopyalama                |
+
+Kopyalama Örneği:
+``` verilog
+{3{a}}          // "{a, a, a}" ifadesine eşittir
+{b, {3{c, d}}}  // "{b, c, d, c, d, c, d}"  ifadesine eşittir
+```
+
+Eğer operandların bit uzunlukları birbirine eşit değilse, daha kısa olanın soluna sıfırlar eklenir.
 
 
 ## Kontrol İfadeleri
@@ -725,5 +734,5 @@ endmodule // eşlik (parity) modülünün sonu
 ```
 
 
-## Port Bağlantı Kuralları
-devam edecek..
+## Behavioral Modeling (Davranışsal Modelleme)
+Devam edecek..
