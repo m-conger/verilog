@@ -361,3 +361,367 @@ arbiter U0 (
 endmodule
 ```
 
+
+## Syntax (Söz Dizimi) & Semantic (Anlam)
+* C ile benzerdir.
+* Büyük küçük harf duyarlıdır (case-sensitive).
+* Tüm anahtar sözcükler küçük harflidir.
+
+Kötü Kod Örneği:
+``` verilog
+module addbit (a, b, ci, sum, co);
+input a, b, ci;output sum co;
+wire a, b, ci, sum, co;endmodule
+```
+
+İyi Kod Örneği:
+ ``` verilog
+ module addbit  (
+    a,
+    b,
+    ci,
+    sum,
+    co);
+    
+    input      a;
+    input      b;
+    input      ci;
+    output     sum;
+    output     co;
+    wire       a;
+    wire       b;
+    wire       ci;
+    wire       sum;
+    wire       co;
+    
+ endmodule
+ ```
+
+ * Tek satırlık açıklama için // kullanılır.
+ * Çok satırlık açıklama için /* */ kullanılır.
+
+Açıklama Örneği:
+``` verilog
+/*  bu bir
+    çok satırlı açıklama
+    örneğidir */
+
+module addbit (
+    a,
+    b,
+    ci,
+    sum,
+    co
+);
+
+// giriş portları tek satırlık açıklama
+
+input       a;
+input       b;
+input       ci;
+
+// çıkış portları
+output      sum;
+output      co;
+
+// veri tipleri
+wire        a;
+wire        b;
+wire        ci;
+wire        sum;
+wire        co;
+
+endmodule
+```
+
+* Sayılarla ilgili olarak Z ifadesi yüksek empedansı, X ifadesi ise bilinmeyeni belirtir.
+* Reel sayılar X ve Z içermez.
+
+### İşaretli-İşaretsiz Sayılar
+32'hDEAD_BEEF: İşaretli veya işaretsiz bir pozitif sayıdır.
+-14'h1234: İşaretli bir negatif sayıdır.
+
+İşaretli-İşaretsiz Sayı Örneği:
+``` verilog
+module signed_number;
+
+reg [31:0]  a;
+
+initial begin
+    a = 14'h1234;
+    $display ("current value of a = %h", a);
+    a = -14'h1234;
+    $display ("current value of a = %h", a);
+    a = 32'hDEAD_BEEF;
+    $display ("current value of a = %h", a);
+    a = -32'hDEAD_BEEF;
+    $display ("current value of a = %h", a);
+        #10 $finish;
+end
+
+endmodule
+
+/* çıktılar
+current value of a = 00001234
+current value of a = ffffedcc
+current value of a = deadbeef
+current value of a = 21524111
+*/
+
+```
+
+### Portlar
+* Portlar bir modül ile onun çevresi arasındaki iletişimi sağlar.
+* Bir hiyerarşide en üst seviyedeki modül hariç tüm modüllerin portları vardır.
+* portlar; `input`, `output` ve `inout` şeklinde olabilir.
+* İyi kod yazmak için her satırda yalnızca bir port belirtilebilir.
+
+Port Bildirim Örneği:
+``` verilog
+input               clk         ;   // saat girişi
+input   [15:0]      data_in     ;   // 16 bit veri girişi yolu
+output  [7:0]       count       ;   // 8 bit sayaç çıkışı
+inout               data_bi     ;   // çift yönlü veri yolu
+```
+
+Tam Bir Örnek:
+``` verilog
+module addbit (
+    a       , // ilk giriş
+    b       , // ikinci giriş
+    ci      , // elde (carry) girişi
+    sum     , // toplam çıkışı
+    co      , // elde (carry) çıkışı
+);
+
+// giriş bildirimi (input declaration)
+input   a;
+input   b;
+input   ci;
+
+// çıkış bildirimi (output declaration)
+output  sum;
+output  co;
+
+// port veri tipleri
+wire    a;
+wire    b;
+wire    ci;
+wire    sum;
+wire    co;
+
+// başlıyor
+assign {co, sum} = a + b + ci;
+
+endmodule // addbit modülünün sonu
+```
+
+
+## Modül Bağlantıları
+### Dolaylı Bağlantılı Modüller
+Bu yöntem de portlar sıralarına göre bağlanmıştır. Sıranın doğru olması önemlidir. Modüllerin dolaylı bağlanması iyi bir fikir değildir.
+
+Modüllerin Dolaylı Bağlantısı Örneği:
+``` verilog
+//------------------------------------------------------------------
+// basit bir toplayıcı devresi
+// tasarım adı          : adder_implicit
+// dosya adı            : adder_implicit.v
+// fonksiyonu           : dolaylı modül bağlantısının işlenmesi
+// kodlayan             : YONGA (Muhammed Conger)
+//------------------------------------------------------------------
+
+module adder_implicit (
+    result      , // toplayıcının çıkışı
+    carry       , // toplayıcının elde çıkışı
+    r1          , // ilk giriş
+    r2          , // ikinci giriş
+    ci            // elde girişi
+);
+
+// giriş port bildirimi (input port declaration)
+input       [3:0]   r1      ;
+input       [3:0]   r2      ;
+input               ci      ;
+
+// çıkış port bildirimi (output port declaration)
+output      [3:0]   result  ;
+output              carry   ;
+
+// port telleri (wires)
+wire        [3:0]   r1      ;
+wire        [3:0]   r2      ;
+wire                ci      ;
+wire        [3:0]   result  ;
+wire                carry   ;
+
+// iç değişkenler (internal variable)
+wire                c1      ;
+wire                c2      ;
+wire                c3      ;
+
+// başlıyor
+addbit u0 (
+    r1[0]       ,
+    r2[0]       ,
+    ci          ,
+    result[0]   ,
+    c1
+);
+
+addbit u1 (
+    r1[1]       ,
+    r2[1]       ,
+    c1          ,
+    result[1]   ,
+    c2
+);
+
+addbit u2 (
+    r1[2]       ,
+    r2[2]       ,
+    c2          ,
+    result[2]   ,
+    c3
+);
+
+addbit u3 (
+    r1[3]       ,
+    r2[3]       ,
+    c3          ,
+    result[0]   ,
+    carry
+);
+
+endmodule // toplayıcı modülünün sonu
+```
+
+### İsimle Bağlantılı Modüller
+Bu yöntemde port sıraları önemsizdir.
+
+Modüllerin İsimle Bağlantısı Örneği:
+``` verilog
+//------------------------------------------------------------------
+// basit bir toplayıcı devresi
+// tasarım adı          : adder_implicit
+// dosya adı            : adder_implicit.v
+// fonksiyonu           : isimle modül bağlantısının işlenmesi
+// kodlayan             : YONGA (Muhammed Conger)
+//------------------------------------------------------------------
+
+module adder_implicit (
+    result      , // toplayıcının çıkışı
+    carry       , // toplayıcının elde çıkışı
+    r1          , // ilk giriş
+    r2          , // ikinci giriş
+    ci            // elde girişi
+);
+
+// giriş port bildirimi (input port declaration)
+input       [3:0]   r1      ;
+input       [3:0]   r2      ;
+input               ci      ;
+
+// çıkış port bildirimi (output port declaration)
+output      [3:0]   result  ;
+output              carry   ;
+
+// port telleri (wires)
+wire        [3:0]   r1      ;
+wire        [3:0]   r2      ;
+wire                ci      ;
+wire        [3:0]   result  ;
+wire                carry   ;
+
+// iç değişkenler (internal variable)
+wire                c1      ;
+wire                c2      ;
+wire                c3      ;
+
+// başlıyor
+addbit u0 (
+    .a          (r1[0])         ,
+    .b          (r2[0])         ,
+    .ci         (ci)            ,
+    .sum        (result[0])     ,
+    .co         (c1)            ,
+);
+
+addbit u1 (
+    .a          (r1[1])         ,
+    .b          (r2[1])         ,
+    .ci         (c1)            ,
+    .sum        (result[1])     ,
+    .co         (c2)            ,
+);
+
+addbit u2 (
+    .a          (r1[2])         ,
+    .b          (r2[2])         ,
+    .ci         (c1)            ,
+    .sum        (result[2])     ,
+    .co         (c3)            ,
+);
+
+addbit u3 (
+    .a          (r1[3])         ,
+    .b          (r2[3])         ,
+    .ci         (c3)            ,
+    .sum        (result[3])     ,
+    .co         (carry)         ,
+);
+
+endmodule // toplayıcı modülünün sonu
+```
+
+
+## Bir Modülün Başlatılması
+``` verilog
+//------------------------------------------------------------------
+// basit eşlik (parity) devresi
+// tasarım adı          : parity
+// dosya adı            : parity.v
+// fonksiyonu           : basit-ilkel bir modül bağlantısının işlenmesi
+// kodlayan             : YONGA (Muhammed Conger)
+//------------------------------------------------------------------
+
+module parity (
+    a       , // ilk giriş
+    b       , // ikinci giriş
+    c       , // üçüncü giriş
+    d       , // dördüncü giriş
+    y         // eşlik (parity) çıkışı
+);
+
+// giriş bildrimi
+input       a       ;
+input       b       ;
+input       c       ;
+input       d       ;
+
+// çıkış bildirimi
+output      y       ;
+
+// port veri tipleri
+wire        a       ;
+wire        b       ;
+wire        c       ;
+wire        d       ;
+wire        y       ;
+
+// iç değişkenler
+wire        out_0   ;
+wire        out_1   ;
+
+// başlıyor
+
+xor u0 (out_0, a, b);
+
+xor u1 (out_1, c, d);
+
+xor u2 (y, out_0, out_1);
+```
+
+
+## Port Bağlantı Kuralları
+devam edecek..
