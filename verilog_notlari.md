@@ -720,6 +720,8 @@ xor u0 (out_0, a, b);
 xor u1 (out_1, c, d);
 
 xor u2 (y, out_0, out_1);
+
+endmodule // eşlik (parity) modülünün sonu
 ```
 
 
