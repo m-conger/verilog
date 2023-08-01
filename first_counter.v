@@ -36,4 +36,16 @@ reg [3:0] counter_out;
 
 //--------------- başlıyor -----------------
 always @(posedge clock)
-begin : COUNTER
+begin : COUNTER // blok adı
+    // şimdi saatin her bir yükselen kenarında reset aktif mi kontrolü yapılacak
+    // eğer aktif ise sayacın çıkışına 4'b0000 yüklenecek
+    if (reset == 1'b1) begin
+        counter_out <= #1 4'b0000;
+    end
+    // eğer enable aktif ise sayaç artacak
+    else if (enable == 1'b1) begin
+        counter_out <= #1 counter_out + 1;
+    end
+end // COUNTER bloğunun sonu
+
+endmodule // counter modülünün sonu
