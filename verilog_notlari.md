@@ -734,5 +734,231 @@ endmodule // eşlik (parity) modülünün sonu
 ```
 
 
-## Behavioral Modeling (Davranışsal Modelleme)
+## Sıralı İfade Grupları (begin-end)
+* Ardışıl gruplar içindeki herhangi bir zamanlama bir önceki ifade ile ilişkilidir.
+* Her bir gecikme bir önceki gecikmeye eklenir.
+
+
+## Paralel İfade Grupları (fork-join)
+* Tüm ifadeler paralel olarak hepsi aynı zamanda gerçekleşir.
+
+Örneğin:
+``` verilog
+module initial_fork_join();
+reg clk, reset, enable, data;
+
+initial begin
+    $monitor ("%g clk=%b reset=%b enable=%b data=%b",
+        $time, clk, reset, enable, data);
+    fork
+        #1  clk = 0;
+        #10 reset = 0;
+        #5  enable = 0;
+        #3  data = 0;
+    join
+
+        #1  $display ("%g terminating simulation", $time);
+    $finish;
+end
+
+endmodule
+```
+
+Burada clk 1 birim, reset 10 birim, enable 5 birim, data ise 3 birim zaman sonra değerini alır. Haliyle tüm ifadeler paralel, aynı zamanda gerçekleşir. Sıralı ifade gruplarında ise (begin-end) zamanın hep bir önceki ifadenin zamanına eklenerek gerçekleştiğine dikkat edilmelidir. Görüldüğü üzere begin-end ve fork-join birlikte de kullanılabilir.
+
+
+## Bloklayan ve Bloklamayan (Blocking & Nonblocking) Atamalar
+Bloklayan (tıkayan) atamalar kodlandığı sırada gerçekleştirilir ve bu yüzden ardışıldır. Bloklayan atamalarda şuanki ifade gerçekleştirilene kadar bir sonraki ifade tıkanır. Atamaları "=" ile yapılır.
+
+Bloklamayan ifadeler ise paralel olarak gerçekleştirilir. Bir sonraki ifadenin gerçekleştirilmesi mevcut ifadenin gerçekleşmesini beklemez, yani mevcut ifade bir sonraki ifadeyi tıkamaz. Atamaları ise "<=" ile yapılır.
+
+## assign & deassign
+`assign` prosedürel ifadesi bir yazmacın üzerine prosedürel olarak yazar. `deassign` prosedürel ifadesi ise bir yazmacın sürekli olarak atanmasını sonlandırır.
+
+
+## force & release
+Prosedürel sürekli atama ifadesinin başka bir biçimidir.
+
+
+## case İfadesi
+`case` bir ifadeyi seri bir durumla karşılaştırır ve ifadeyi gerçekleştirir ya da ilk eşleşen durumla ilgili olan bir grup ifadeyi gerçekleştirir.
+* Tekli veya çoklu ifadeleri destekler.
+* Çoklu ifadelerin gruplanması begin-end ile sağlanır.
+
+Normal `case` Örneği:
+``` verilog
+module mux (a, b, c, d, sel, y);
+input a, b, c, d;
+input [1:0] sel;
+output y;
+
+reg y;
+
+always @(a or b or c or d or sel)
+case (sel)
+    0   :   y = a;
+    1   :   y = b;
+    2   :   y = c;
+    3   :   y = d;
+    default : $display("error in SEL");
+endcase
+
+endmodule
+```
+
+Default'suz `case` Örneği:
+``` verilog
+module mux_without_default (a, b, c, d, sel, y);
+input a, b, c, d;
+input [1:0] sel;
+output y;
+
+reg y;
+
+always @(a or b or c or d or sel)
+case (sel)
+    0   :   y = a;
+    1   :   y = b;
+    2   :   y = c;
+    3   :   y = d;
+    2'bxx,2'bx0,2'bx1,2'b0x,2'b1x,
+    2'bzz,2'bz0,2'bz1,2'b0z,2'b1z, : $display("error in SEL");
+endcase
+
+endmodule
+```
+
+`case`'in x ve z ile Kullanımı Örneği:
+``` verilog
+module case_xz(enable);
+input enable;
+
+always @(enable)
+case (enable)
+    1'bz : $display ("enable is floating");
+    1'bx : $display ("enable is unknown");
+    default : $display ("enable is %b", enable);
+endcase
+
+endmodule
+```
+
+Ayrıca x ve z için `casex` ve `casez` anahtar kelimeleri de bulunmaktadır.
+
+
+## Döngüleme İfadeleri
+* forever
+* repeat
+* while
+* for
+
+### forever Döngüsü
+forever döngüsü sürekli olarak gerçekleştirilir ve döngü asla sonlanmaz.
+
+Örneğin (serbest hareketli saat üreteci, free running clock generator):
+``` verilog
+module forever_example ();
+
+reg clk;
+
+initial begin
+    #1 clk = 0;
+    forever begin
+        #5 clk = ! clk;
+    end
+end
+
+initial begin
+    $monitor ("Time = %d clk = %b", $time, clk);
+    #100 $finish;
+end
+
+endmodule
+```
+
+### repeat Döngüsü
+Döngü belirli bir sayıda gerçekleştirilebilir.
+
+Örneğin:
+``` verilog
+// ...
+
+repeat (8) begin
+    // ...
+end
+
+// ...
+```
+
+### while Döngüsü
+Döngü şartı sağlandığı sürece döngü gerçekleşir.
+
+Örneğin:
+``` verilog
+// ...
+
+while (data[0] == 0) begin
+    // ...
+end
+
+// ...
+```
+
+### for Döngüsü
+Örneğin:
+``` verilog
+// ...
+
+for (i = 0; i < 256; i = i + 1) begin // (<başlangıç>; <deyim>; <adım>)
+    // ...
+end
+
+// ...
+```
+
+
+## Sürekli Atama İfadeleri
+Sürekli atama ifadeleri net'leri (wire veri tipini) sürer. Yapısal bağlantıları gösterir.
+
+* Üç durumlu (tri-state) arabelleklerini modellemek için kullanılır.
+* Kombinasyonel lojiği modüllemek için kullanılır.
+* Prosedürel bloğun (`always` & `initial` bloklarının) dışındadır.
+* Sürekli atamanın sol tarafı mutlaka bir veri tipinde olmalıdır.
+
+Örneğin (tek bit toplayıcı):
+``` verilog
+module adder_using_assign ();
+reg a, b;
+wire sum, carry;
+
+assign #5 (carry, sum) = a + b;
+
+initial begin
+    $monitor ("A = %b B = %b CARRY = %b sum = %b", a, b, carry, sum);
+```
+
+Örneğin (üç durumlu arabellek, tri-state buffer):
+``` verilog
+module module tri_buf_using_assign ();
+reg data_in, enable;
+wire pad;
+
+assign pad = (enable) ? data_in : 1'bz;
+
+initial begin
+    $monitor ("TIME = %g ENABLE = %b DATA : %b PAD %b",
+        $time, enable, data_in, pad);
+    #1 enable = 0;
+    #1 data_in = 1;
+    #1 enable = 1;
+    #1 data_in = 0;
+    #1 enable = 0;
+    #1 finish;
+end
+
+endmodule
+```
+
+
+## Yayılım Gecikmesi (Propagation Delay)
 Devam edecek..
