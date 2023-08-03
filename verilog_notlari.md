@@ -961,4 +961,29 @@ endmodule
 
 
 ## Yayılım Gecikmesi (Propagation Delay)
+Sürekli atamalar belirtilmiş bir gecikmeye sahiptir. Sadece tüm geçişler için gecikmeler belirtilmiş olmalıdır. Bir "minimum:tipik:maksimum" gecikme aralığı belirtilmelidir.
+
+Örneğin (üç durumlu arabellek, tri-state buffer):
+``` verilog
+module tri_buf_assign_delays();
+reg data_in, enable;
+wire pad;
+
+assign #(1:2:3) pad = (enable) ? data_in : 1'bz;
+
+initial begin
+    $monitor ("ENABLE = %b DATA : %b PAD %b", enable, data_in, pad);
+     #10    enable = 1;
+     #10    data_in = 1;
+     #10    enable = 1;
+     #10    data_in = 0;
+     #10    enable = 0;
+     #10    $finish;
+end
+
+endmodule
+```
+
+
+## Prosedürel Blok Kontrolü
 Devam edecek..
