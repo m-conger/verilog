@@ -1229,5 +1229,166 @@ endmodule
 CPU Yazma/Okuma Görevi (Write/Read Task) Örneği:
 ``` verilog
 module bus_wr_rd_task();
-//devam edecek..
+
+reg clk, rd, wr, ce;
+reg [7:0] addr, data_wr, data_rd;
+reg [7:0] read_data;
+
+initial begin
+    clk = 0;
+    read_data = 0;
+    rd = 0;
+    wr = 0;
+    ce = 0;
+    addr = 0;
+    data_wr = 0;
+    data_rd = 0;
+
+    // yazma (write) ve okuma (read) görevleri burada çağrılmaktadır.
+     #1     cpu_write(8'h11, 8'hAA);
+     #1     cpu_read(8'h11, read_data);
+     #1     cpu_write(8'h12, 8'hAB);
+     #1     cpu_read(8'h12, read_data);
+     #1     cpu_write(8'h13, 8'h0A);
+     #1     cpu_read(8'h13, read_data);
+     #100   $finish;
+end
+
+// saat üreteci (clock generator)
+always
+     #1     clk = ~clk;
+
+// CPU okuma (read) görevi
+task cpu_read;
+    input   [7:0] address;
+    output  [7:0] data;
+    
+    begin
+        $display ("%g CPU READ TASK WITH ADDRESS : %h", $time, address);
+        $display ("%g -> DRIVING CE, RD AND ADDRESS ON TO BUS", $time);
+        @ (posedge clk);
+        addr = address;
+        ce = 1;
+        rd = 1;
+        @ (negedge clk);
+        data = data_rd;
+        @ (posedge clk);
+        addr = 0;
+        ce = 0;
+        rd = 0;
+        $display ("%g CPU READ DATA : %h", $time, data);
+        $display ("=================");
+    end
+endtask
+
+// CPU yazma (write) görevi
+task cpu_write;
+    input   [7:0] address;
+    output  [7:0] data;
+    
+    begin
+        $display ("%g CPU WRITE TASK WITH ADDRESS : %h DATA : %h", $time, address, data);
+        $display ("%g -> DRIVING CE, WR, WR DATA AND ADDRESS ON TO BUS", $time);
+        @ (posedge clk);
+        addr = address;
+        ce = 1;
+        wr = 1;
+        data_wr = data;
+        @ (posedge clk);
+        addr = 0;
+        ce = 0;
+        wr = 0;
+        $display ("=================");
+    end
+endtask
+
+// görevleri test etmek için bellek modeli
+reg [7:0] mem[0:255];
+
+always @(addr or ce or rd or wr or data_wr)
+if (ce) begin
+    if (wr) begin
+        mem[addr] = data_wr;
+    end
+
+    if (rd) begin
+        data_rd = mem[addr];
+    end
+end
+
+endmodule
 ```
+
+## Function (Fonksiyon)
+Bir Verilog HDL fonksiyonu bir görevle (task) neredeyse aynıdır.
+* Fonksiyon birden fazla çıkış süremez, gecikme içeremez.
+* Fonksiyonlar kullanılacakları modülde tanımlanırlar.
+* Fonksiyonlar ayrı dosyalarda tanımlanabilir ve derleme yönergesine göre görevler örneklenerek istenilen fonksiyon eklenir.
+* Fonksiyonlar zamanlama gecikmelerini içeremez. Posedge, negedge ve #delay'de olduğu gibi. Bunun anlamı fonksiyonlar "sıfır" zaman gecikmesiyle gerçekleştirilir.
+* Fonksiyonlar istediği sayıda girişe sahip olabilir ancak sadece bir tane çıkış içerebilir.
+* Fonksiyon içerisinde bildirilen değişkenler sadece bu fonksiyon içinde görülebilir yerel değişkenlerdir.
+* Fonksiyon içindeki bildirim sırası, değişkenlerin kullanan tarafından nasıl gönderileceğini tanımlar.
+* Fonksiyonlar yerel değişkenler kullanılmadığı zaman global değişkenler kullanılabilir.
+* Yerel değişkenler kullanıldığı zaman temelde çıkış sadece fonksiyon gerçekleştirildikten sonra atanır.
+* Fonksiyonlar kombinasyonel lojiği modellemek için kullanılabilir.
+* Fonksiyonlar diğer fonksiyonları çağırabilir ancak görevleri çağıramazlar.
+* Bir fonksiyon `function` anahtar sözcüğü ile başlamaktadır ve `endfunction` fonksiyonu ile sonlandırılmaktadır.
+* Girişler (inputs) `function` anahtar sözcüğünden sonra bildirilmektedir.
+
+Basit Bir Fonksiyon Örneği
+``` verilog
+module simple_function ();
+
+function myfunction;
+
+input a, b, c, d;
+
+begin
+    myfunction = ((a+b) + (c-d));
+end
+
+endfunction
+
+endmodule
+```
+
+Bir Fonksiyonun Çağrılması Örneği:
+``` verilog
+module function_calling (a, b, c, d, e, f);
+
+input   a, b, c, d, e;
+output  f;
+wire    f;
+
+`include "myfunction.v"
+
+assign f = (myfunction (a, b, c, d)) ? e : 0;
+
+endmodule
+```
+
+
+## System Task & Function (Sistem Görev ve Fonksiyonları)
+* Simülasyon sırasında giriş ve çıkış üretmek için görevler (tasks) ve fonksiyonlar (functions) vardır. Bunların isimleri dolar işaretiyle ($) başlar.
+* Sentez araçları sistem fonksiyonlarını ayrıştırır ve gözardı eder. Bundan dolayı sentezlenebilir modellere bile eklenebilir.
+* ` $display`, `$strobe`, `$monitor` komutları aynı sözdizimine sahiptir ve simülasyon esnasında metni ekranda gösterir.
+* GTKWave, Undertow veya Debussy dalgaformu gösterme aracından daha az kullanışlıdır.
+* `$display` ve `$strobe` her seferinde bir kez metni ekranda gösterir ancak `$monitor`, parametrelerden birinin değiştiği her seferde metni ekranda gösterir.
+* `$display` ile `$strobe` arasındaki fark, `$strobe` gerçekleştiği andan ziyade mevcut simülasyon zaman birimin en sonunda parametrelerini gösterir.
+* `$time`, `$stime`, `$realtime` komutları mevcut simülasyon zamanlarını sırasıyla 64-bit’lik tamsayı, 32-bit’lik tamsayı ve reelsayı olarak döndürür.
+* `$reset` komutu simülasyon zamanını 0’a döndürerek sıfırlar.
+* `$stop` komutu simülatörü durdurur ve etkileşimli moda geçirerek kullanıcıya komut girmesi sağlanır.
+* `$finish` komutu simülatörden çıkarak işletim sistemine dönmeyi sağlar.
+* `$scope(hiyerarşi_adi)` komutu mevcut hiyerarşik kapsamı "hiyerarşi_adi" olarak atar.
+* `$showscopes(n)` komutu mevcut kapsamda tüm modülleri, görevleri ve blok isimlerini listeler.
+* `$random` komutu çağırıldığı her anda rasgele bir tamsayı üretir. Eğer sıra tekrarlanabilirse, ilk olarak bir sayısal argüman (seed) verilir. Diğer türlü "seed" bilgisayarın saatinden türetilir.
+* `$dumpfile`, `$dumpvar`, `$dumpon`, `$dumpoff`, `$dumpall` komutları debussy gibi simülasyon izleyicisine değişkenlerin değişimini döker. Döküm dosyaları bir simülasyondaki tüm değişkenleri dökebilir durumdadır. Bu durum hata ayıklama (debugging) için kullanışlıdır ancak çok yavaş olabilir.
+* `$fopen`, `$fdisplay`, `$fstrobe`, `$fmonitor`, `$fwrite` komutları daha seçici olarak dosyalara yazar.
+* `$fopen` komutubir çıkış dosyası açar ve bu açık dosyaya diğer komutlar tarafından ulaşmaya imkan sağlar.
+* `$fclose` komutu osyayı kapatır böylece diğer programlar bu dosyaya ulaşabilir. 
+* `$fdisplay` ve `$fwrite` komutları bir dosyaya biçimli yazmayı sağlar. Birbiriyle aynıdır fakat `$fdisplay` komutu her bir gerçekleşmede yeni bir satır eklerken, `$write` komutu, eklemez.
+* `$strobe` komutu da gerçekleştirildiğinde dosyaya yazar fakat yazmadan önce zaman adımındaki tüm işlemlerin tamamlanmasını bekler.
+
+
+## Testbench Yazma Sanatı
+Devam edecek..
