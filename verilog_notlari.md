@@ -986,4 +986,248 @@ endmodule
 
 
 ## Prosedürel Blok Kontrolü
-Devam edecek..
+Prosedürel blok, simülasyon zamanın sıfır anında aktif olacaktır.
+
+
+## Prosedürel Kodlama Kullanılarak Çoklu Lojik (Combo Logic)
+Eğer koşullu kontrol `if` kullanılarak yapılıyorsa, `else` kullanılmak zorundadır. `else`'nin olmaması bir tutucu (latch) ile sonuçlanır. Eğer `else` yazılmak istenmiyor ise çoklu bloğun (combo logic) tüm değişkenlerine ilk değer verilmelidir.
+
+Latch Oluşmasının Önlenmesi Örneği (tüm koşulların belirtilmesi):
+``` verilog
+module avoid_latch_else ();
+
+reg q;
+reg enable, d;
+
+always @(enable or d)
+if (enable) begin
+    q = d;
+end else begin
+    q = 0;
+end
+
+endmodule
+```
+
+Latch Oluşmasının Önlenmesi Örneği (hataya meyilli değişkenlerin sıfır yapılması):
+``` verilog
+module avoid_latch_init ();
+
+reg q;
+reg enable, d;
+
+always @(enable or d)
+begin
+    q = 0;
+    if (enable) begin
+        q = d;
+    end
+end
+
+endmodule
+```
+
+
+## Prosedürel Kodlama Kullanılarak Ardışıl Lojik
+* Ardışıl lojiği modellemek için bir prosedür bloğu saatin pozitif veya negatif kenarına hassas olmalıdır.
+* Asenkron sıfırlama (reset) modellemek için prosedür bloğu hem saate hem de reset'e hassas olmalıdır.
+* Ardışıl lojikteki tüm atamalar birbirini tıkamayan-engellemeyen (nonblocking) şekilde olmalıdır.
+
+Bazen sensitive list'te çoklu kenar tetiklemeli değişkenlere sahip olmak istenebilir. Bu durum simülasyon için iyidir ancak sentez için gerçek hayattaki kadar hassas değildir. Flip-flop'un sadece bir saati, bir reset (sıfırlama) ve bir preset (önayarlı) olabilir.
+
+Yeni başlayanların sıklıkla karşılaştıkları bir başka hata ise saatin (clock) flip-flop'un enable (etkin) girişine bağlanmasıdır. Bu durum da simülasyon için iyidir ancak sentez için doğru değildir.
+
+İki saat kullanma Örneği (kötü kodlama):
+``` verilog
+module wrong_seq ();
+
+reg q;
+reg clk1, clk2, d1, d2;
+
+always @(posedge clk1 or posedge clk2)
+if (clk1) begin
+    q <= d1;
+end else if (clk2) begin
+    q <= d2;
+end
+
+always
+    #1      clk1 = ~clk1;
+
+always
+    #1.9    clk2 = ~clk2;
+
+endmodule
+```
+
+Asenkron Reset ve Asenkron Preset'li D Flip-Flop Örneği:
+``` verilog
+module dff_async_reset_async_prst ();
+
+reg clk, reset, preset, d;
+reg q;
+
+always @(posedge clk or posedge reset or posedge preset)
+if (reset) begin
+    q <= 0;
+end else if (preset) begin
+    q <= 1;
+end else begin
+    q <= d;
+end
+
+always
+#1 clk = ~clk;
+
+endmodule
+```
+
+Senkron Reset ve Senkron Preset'li D Flip-Flop Örneği:
+``` verilog
+module dff_sync_reset_sync_prst ();
+
+reg clk, reset, preset, d;
+reg q;
+
+always @(posedge clk)
+if (reset) begin
+    q <= 0;
+end else if (preset) begin
+    q <= 1;
+end else begin
+    q <= d;
+end
+
+always
+#1 clk = ~clk;
+
+endmodule
+```
+
+
+## Prosedürel Blok Uyumluluğu
+Eğer bir modülün içinde birden çok `always` bloğu varsa, tüm bloklar (`always` ve `initial`) sıfır zamanında gerçekleştirilmeye başlanacaktır ve eş zamanlı olarakçalışmaya devam edecektir. Eğer kodlama uygun şekilde yapılmamış ise bazen bu bir yarış durumuna neden olur.
+
+
+## Yarış Durumu (Race Condition)
+Örneğin:
+``` verilog
+module race_condition();
+reg b;
+
+initial begin
+    b = 0;
+end
+
+initial begin
+    b = 1;
+end
+
+endmodule
+```
+
+Yukarıdaki örnekte her iki blok da aynı zamanda gerçekleştiğinden b'nin değerinin ne olduğunu söylemek zordur. Yarış durumu verilog'ta sıkça olan bir olaydır.
+
+
+## İsimlendirilmiş Bloklar
+Bloklara isim verilebilir. `begin: <BLOK_ISMI>` şeklinde uygulanabilir. Ayrıca isimlendirilmiş bloklar `disable` ifadesi ile etkisizleştirilebilir.
+
+
+## Procedural Timing Control
+Prosedürel Blok ve Zamanlama Kontrolleri;
+* Gecikme (delay) Kontrolleri
+* Kenar Hassasiyetli Olay (edge-sensitive event) Kontrolleri
+* Seviye Hassasiyetli Olay (level-sensitive event) Kontrolleri - Bekleme (wait) ifadeleri
+* İsimlendirilmiş Olaylar
+
+
+## Task & Functions (Görev ve Fonksiyonlar)
+
+## Task (Görev)
+* Veri göreve gönderilir.
+* İşlem bittikten sonra sonuç döndürülür.
+* Bunlar özel olarak veri girişleri (data ins) veri çıkışları (data outs) yada netlistdeki tel(wire) olarak isimlendirilmelidir.
+* Task, kodun ana gövdesine eklenmiştir.
+* Birden çok kez çağırılabilinir. Böylece kod tekrarlarından kaçınılmış olunur.
+* Görevler(tasks) modülde kullanıldığı yerde tanımlanmıştır.
+* Bir görevi farklı dosyalarda da tanımlamak mümkündür ve görevin olduğu derleme yönergesine göre eklenebilir.
+* Görevler, posedge, negedge, delay ve wait gibi zamanlama gecikmelerini (timing delays) içerebilir.
+* Görevler birçok sayıda giriş veya çıkışlara sahip olabilirler.
+* Değişkenler görevlerin içinde bildirilirler ve sadece bu görev içinde görülebilir yani yerel değişkendir.
+* Görev içindeki bildirim sırası görev çağırıldığında değişkenlerin göreve nasıl gönderileceğini tanımlamaktadır.
+* Görevler yerel değişkenler kullanılmadığı zaman global değişkenleri kullanabilir.
+* Yerel değişkenler kullanıldığında, temelde çıkış sadece görev gerçekleştirilmesinin soununda atanır.
+* Görevler başka görevleri veya fonksiyonları çağırabilir.
+* Görevler kombinasyonel ve ardışıl lojik modelleme için kullanılabilir.
+* Bir görev özellikle bir ifade ile çağırılmalıdır, fonksiyonda olduğu gibi bir ifadenin içinde kullanılamaz.
+* Bir görev `task` anahtar sözcüğüyle başlar ve `endtask` anahtar sözcüğüyle biter.
+* Girişler ve çıkışlar `task` anahtar sözcüğünden sonra bildirilirler.
+* Yerel değişkenler, giriş ve çıkışlar bildiriminde sonra bildirilirler.
+
+Basit Bir Görev Örneği:
+``` verilog
+module simple_task ();
+
+task convert;
+
+input   [7:0] temp_in;
+output  [7:0] temp_out;
+
+begin
+    temp_out = (9/5)*(temp_in+32);
+end
+
+endtask
+
+endmodule
+```
+
+Global Değişkenler Kullanılan Görevler Örneği:
+``` verilog
+module task_global();
+
+reg [7:0] temp_out;
+reg [7:0] temp_in;
+
+task convert;
+
+begin
+    temp_out = (9/5)*(temp_in+32);
+end
+
+endtask
+
+endmodule
+```
+
+### Bir Görevin Çağrılması (Calling a Task)
+Bir görevin ayrı bir dosyada kodlanması, bu görevin birçok modülde kullanılabilmesine olanak tanır. Örneğin yukarıdaki `simple_task` modül isimli görev "simple_task.v" isimli bir görev dosyası olsun. Bu dosya aşağıdaki örnekte olduğu gibi kullanılabilmektedir.
+
+``` verilog
+module task_calling (temp_a, temp_b, temp_c, temp_d);
+
+input   [7:0] temp_a,   temp_c;
+output  [7:0] temp_b,   temp_d;
+
+reg     [7:0] temp_b,   temp_d;
+
+`include "simple_task.v"
+
+always @(temp_a)
+begin
+    convert (temp_a, temp_b);
+end
+
+always @(temp_c)
+begin
+    convert (temp_c, temp_d);
+end
+
+endmodule
+```
+
+CPU Yazma/Okuma Görevi (Write/Read Task) Örneği:
+``` verilog
+module bus_wr_rd_task();
+//devam edecek..
+```
