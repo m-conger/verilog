@@ -1391,4 +1391,124 @@ endmodule
 
 
 ## Testbench Yazma Sanatı
+Günümüzde ASIC ve diğer sayısal tasarımlar oldukça karmaşık bir hal almıştır. Haliyle artık testbench yazmak RTL kodun kendisini yazmak kadar karmaşıktır. Gelinen noktada tipik olarak bir ASIC için harcanan sürenin 60-70%'i doğrulama (verification), geçerleme (validation) ve test (testing) aşamaları için harcanmaktadır.
+
+Testbench yazmak için öncelikle DUT (design under test, test altındaki tasarım) belirtimleri (specification) bilinmelidir. Belirtimler açıkça anlaşılmış olmalı ve testbench mimarisinin ve test senaryosunun temel dokümanlarının detaylı olarak yapılması gerekmektedir.
+
+Örneğin (sayaç, counter):
+``` verilog
+//-----------------------------------------------------------------------
+//
+// tasarım ismi     : counter (sayaç)
+// dosya ismi       : counter.v
+// fonksiyon        : 4-bit up counter
+// kodlayan         : YONGA (Muhammed Conger)
+//
+//-----------------------------------------------------------------------
+
+module countert (clk, reset, enable, count);
+input           clk, reset, enable;
+output  [3:0]   count;
+reg     [3:0]   count;
+
+always @(posedge clk)
+if (reset == 1'b1) begin
+    count <= 0;
+end else if (enable == 1'b1) begin
+    count <= count + 1;
+end
+
+endmodule
+```
+
+
+## Test Planı
+Aşağıdaki testbench ortamı ile kendi kendini test eden otomatik bir testbench yazılmak istensin.
+
+![Image](https://www.asic-world.com/images/verilog/vcount_tb.gif)
+
+DUT testbench'te örneklenir ve testbench bir saat üreteci, reset (sıfırlama) üreteci, enable (etkin) lojik üreteci ve temel olarak sayacın beklenen değerini hesaplayan ve bunu sayacın çıkışındaki değer ile karşılaştıran bir karşılatırma lojik içerir.
+
+
+## Testbench Yazma
+Herhangi bir testbench oluşturmanın ilk adımı DUT'a girişleri `reg` olarak bildiren ve DUT'tan çıkışları bir `wire` olarak alan bir şablon oluşturmaktır. Ardından aşağıda gösterildiği gibi DUT örneklenmelidir. (NOT: Testbench'te port listesi yoktur.)
+
+``` verilog
+module counter_tb;
+    reg             clk, reset, enable;
+    wire    [3:0]   count;
+
+    counter     U0 (
+        .clk    (clk),
+        .reset  (reset),
+        .enable (enable),
+        .count  (count)
+    );
+
+endmodule
+```
+
+
+Saat Üreteçli Testbench:
+``` verilog
+module counter_tb;
+    reg             clk, reset, enable;
+    wire    [3:0]   count;
+
+    counter     U0 (
+        .clk    (clk),
+        .reset  (reset),
+        .enable (enable),
+        .count  (count)
+    );
+
+    initial
+    begin
+        clk = 0;
+        reset = 0;
+        enable = 0;
+    end
+
+    always
+         #5 clk = ! clk;
+
+endmodule
+```
+
+Bir başlangıç (initial) bloğu verilog'ta sadece bir kez gerçekleştirilir. Böylece simülator `clk`, `reset` ve `enable` değerlerini 0 olarak atar.
+
+
+## Bellek Modelleme
+Belleklerin davranışsal modelleri yazmaç değişkenlerinin dizisiyle bildirilerek modellenir. Dizideki herhangi bir sözcüğe dizinin indisiyle erişilebilir. Dizideki ayrık bir bit'e ulaşmak için geçici bir değişken gereklidir.
+
+
+### Söz Dizimi
+``` verilog
+reg [wordsize:0] array_name [0:arraysize]
+```
+
+
+### Bildirim (Declaration)
+``` verilog
+reg [7:0] my_memory [0:255];
+```
+
+Burada `[7:0]` belleğin genişliği ve `[0:255]` ise belleğin derinliğidir. Parametreleri şöyledir;
+* Genişlik (With): 8 bit (En yüksek bit en soldadır.)
+* Derinlik (Depth): 256 (0'ıncı adres, dizideki 0'ıncı bölgeyi belirtir.)
+
+
+### Değerlerin Saklanması
+``` verilog
+my_memory[address] = data_in;
+```
+
+
+### Değerlerin Okunması
+``` verilog
+data_out = my_memory[address];
+```
+
+
+### Bit Okuma (Read)
 Devam edecek..
