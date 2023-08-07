@@ -1481,8 +1481,7 @@ Bir başlangıç (initial) bloğu verilog'ta sadece bir kez gerçekleştirilir. 
 ## Bellek Modelleme
 Belleklerin davranışsal modelleri yazmaç değişkenlerinin dizisiyle bildirilerek modellenir. Dizideki herhangi bir sözcüğe dizinin indisiyle erişilebilir. Dizideki ayrık bir bit'e ulaşmak için geçici bir değişken gereklidir.
 
-
-### Söz Dizimi
+Söz Dizimi:
 ``` verilog
 reg [wordsize:0] array_name [0:arraysize]
 ```
@@ -1511,4 +1510,74 @@ data_out = my_memory[address];
 
 
 ### Bit Okuma (Read)
+Bazen sadece bir bit'in okunmasına ihtiyaç duyulabilir. Ancak verilog bir bit'lik okumaya ya da yazmaya izin vermez. Bu nedenle şu şekilde bir incelik düşünülmüştür;
+``` verilog
+data_out = my_memory[address];
+
+data_out_it_0 = data_out[0];
+```
+
+
+### Belleği Parafe Etmek (Initializing Memories)
+Bir bellek dizisi diskteki bellek örüntü dosyasından okuyarak ve onu bellek dizisinde saklayarak parafe edebilir (başlatabilir). Bunu yapabilmek için sistem görevlerinden `$readmemb` ve `$readmemh` ifadeleri kullanılır. `$readmemb` belleğin içeriğinin ikili gösterimi için kullanılırken `$readmemh` ise belleğin içeriğinin hex-16'lık gösterimi için kullanılır.
+
+Söz Dizimi:
+``` verilog
+$readmemh("file_name", mem_array, start_addr, stop_addr);
+```
+
+Basit Bellek Örneği:
+``` verilog
+module memory();
+reg [7:0] my_memory [0:255];
+
+initial begin
+    $readmemh("memory.list", my_memory);
+end
+
+endmodule
+```
+
+"memory.list" Dosyası Örneği:
+``` verilog
+// açıklamalara (comments) izin verilir
+1100_1100   // bu ilk adrestir              :8'h00
+1010_1010   // bu ikinci adrestir           :8'h01
+@ 55        // yeni bir adres atla (jump)   :8'h55
+0101_1010   // bu adres                     :8'h55
+0110_1001   // bu adres                     :8'h56
+```
+
+
+## FSM Modelleme
+Durum makineleri veya sonlu durum makineleri (FSM) sayısal tasarımın kalbidir.
+
+### Durum Makine Tipleri
+Herbirinden üretilen çıkışlara göre sınıflandırılmış iki tip durum makinesi bulunmaktadır. "Mealy" ve "Moore" durum makineleri.
+
+Durum makineleri durumların şifrelenmesine göre de sınıflandırılabilir. Şifreleme (encoding) stili kritik bir faktördür. Bu FSM'nin hızına ve kapı karmaşıklığına karar verir. "binary", "gray", "one-hot", "one-cold" ve "almost one-hot", FSM için kullanılan farklı tipteki şifreleme stilleridir.
+
+
+### Mealy Modeli
+Çıkışlardan biri ya da birkaçı şuanki durumun bir ya da birkaç girişinin bir fonksiyonudur.
+
+![Image](https://www.asic-world.com/images/verilog/mealy_fsm.gif)
+
+
+### Moore Modeli
+Çıkışlar sadece şuanki durumun bir fonksiyonudur.
+
+![Image](https://www.asic-world.com/images/verilog/moore_fsm.gif)
+
+
+### Durum Makinelerinin Modellenmesi
+FSM kodlanırken kombinasyonel ve ardışıl lojik iki farklı always bloğunda olabilir. Her iki şekilde de bir sonraki durum lojiği (next state logic) always bloğunda kombinasyoneldir. Durum yazmaçları (state registers) ve çıkış lojiği (output logic) ise ardışıl lojiktir. Bu ayrıntılar oldukça önemlidir. Bu sayede bir sonraki durum lojiği için asenkron sinyaller FSM'yi beslemeden önce senkronlaştırılabilir. Ayrıca FSM her zaman ayrı bir verilog dosyasında tutulması iyi olacaktır.
+
+Parametreler gibi sabit bildirimi kullanmak ya da `'define` (tanımlamak) ile FSM'nin durumlarını tanımlamak kodu daha okunabilir ve daha kolay yönetilebilir yapmaktadır.
+
+
+### Örnek Arbiter (Arabulucu)
+
+![Image](https://www.asic-world.com/images/verilog/aribiter_fsm.gif)
+
 Devam edecek..
