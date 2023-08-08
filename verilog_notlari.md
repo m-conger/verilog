@@ -2041,4 +2041,110 @@ endmodule
 
 
 ## Parameterized Modules (Parametreleştirilmiş Modüller)
+Farklı derinliklerde fakat aynı fonksiyonaliteye sahip sayaçlara ihtiyaç duyulan bir tasarımın olduğu varsayılsın. O halde her derinlik için farklı sayaç tasarımlarına ihtiyaç duyulacaktır. Verilog bünyesinde desteklenen parametre yöntemi ile bu gereksizlik ortadan kaldırılabilir.
+
+Bir parametre verilog tarafından modül yapısı içerisinde sabit bir değer olarak bildirilerek tanımlanır. Değer, modülün davranışını fiziksel gösteriminde karakterize eden bir dizi özellik kümesi olarak kullanılır. Varsayılan değerleri, `defparam` ifadesi kullanılarak veya örneklem esnasında yeni bir parametre kümesi oluşturarak geçersiz hale getirmek mümkündür. Bu duruma parametrelerin üstüne yazma (parameter overriding) denir.
+
+
+### Parametre Kullanımının Özellikleri
+* Bir modülün içinde tanımlanır.
+* Yerel kapsamlıdır (local scope).
+* Örneklem (instantiation) zamanında üstüne yazılabilir (overridde).
+* Eğer çoklu parametreler tanımlandıysa, bunların tanımlandığı sırayla üstüne yazılmalıdır. Eğer bir üstüne yazma değeri belirtilmemişse varsayılan parametre bildirimi değerleri kullanılır.
+* `defapram` ifadesi ile değiştirilmiş olabilir.
+
+
+### Parameter Override
+`defparam` Kullanarak Parametrenin Üstüne Yazma Örneği:
+``` verilog
+module secret_number;
+parameter my_secret = 0;
+
+initial begin
+  $display("My secret number is %d", my_secret);
+end
+  	 
+endmodule
+ 
+module defparam_example();
+  	 
+defparam U0.my_secret = 11;
+defparam U1.my_secret = 22;
+  	 
+secret_number U0();
+secret_number U1();
+  	 
+endmodule
+```
+
+
+### Parameter Override
+Instantiating (Örneklem) Sırasında Parametrenin Üstüne Yazma Örneği:
+``` verilog
+module secret_number;
+parameter my_secret = 0;
+
+initial begin
+    $display("my secret number in module is %d", my_secret);
+end
+
+endmodule
+
+module param_override_instance_example();
+
+secret_number #(11) U0();
+secret_number #(22) U1();
+
+endmodule
+```
+
+Bir Değerden Fazla Parametre Gönderme Örneği:
+``` verilog
+module  ram_sp_sr_sw ( 
+clk         , // Clock Input
+address     , // Address Input
+data        , // Data bi-directional
+cs          , // Chip Select
+we          , // Write Enable/Read Enable
+oe            // Output Enable
+); 
+
+parameter DATA_WIDTH = 8 ;
+parameter ADDR_WIDTH = 8 ;
+parameter RAM_DEPTH = 1 << ADDR_WIDTH;
+
+// RAM kodu burada başlıyor
+
+endmodule
+```
+
+Bir parametreden fazla parametre örneklenirken parametre değerleri alt modülde bildirildikleri sırayla gönderilmelidir.
+
+``` verilog
+module  ram_controller (); // bazı portlar
+
+// denetleyici kodu
+ 
+ram_sp_sr_sw #(16,8,256)  ram(clk,address,data,cs,we,oe);
+ 
+endmodule
+```
+
+
+## Verilog 2001
+Şimdiye kadar yapılan çalışmalar çalışacaktır ancak verilog yeni sürümlerinde bulunan yeni özellikler kodu daha okunabilir hale getirir ve daha az hatta oluşmasını sağlar. Bu kapsamda bir önceki kod ile aşağıdaki kod kıyaslanabilir.
+
+``` verilog
+module  ram_controller (); // bazı portlar
+ 
+ram_sp_sr_sw #( 
+	.DATA_WIDTH(16), 
+	.ADDR_WIDTH(8), 
+	.RAM_DEPTH(256))  ram(clk,address,data,cs,we,oe);
+ 
+endmodule
+```
+
+
+## Verilog Sentez Eğitseli (Tutorial)
 Devam edecek..
