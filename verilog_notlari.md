@@ -1714,38 +1714,36 @@ begin : OUTPUT_LOGIC
 end
 ```
 
-### İkili Şifreleme Kullanmanın Tam Kodu
+### Binary Encoding Kullanmanın Tam Kodu
 ``` verilog
 module fsm_full(
-clock ,         // Clock
-reset ,         // Active high reset
-req_0 ,         // Active high request from agent 0
-req_1 ,         // Active high request from agent 1
-req_2 ,         // Active high request from agent 2
-req_3 ,         // Active high request from agent 3
-gnt_0 ,         // Active high grant to agent 0
-gnt_1 ,         // Active high grant to agent 1
-gnt_2 ,         // Active high grant to agent 2
-gnt_3           // Active high grant to agent 3
+clock ,
+reset ,
+req_0 ,
+req_1 ,
+req_2 ,
+req_3 ,
+gnt_0 ,
+gnt_1 ,
+gnt_2 ,
+gnt_3
 );
 
-// Port declaration here
-input clock ;   // Clock
-input reset ;   // Active high reset
-input req_0 ;   // Active high request from agent 0
-input req_1 ;   // Active high request from agent 1
-input req_2 ;   // Active high request from agent 2
-input req_3 ;   // Active high request from agent 3
-output gnt_0 ;  // Active high grant to agent 0
-output gnt_1 ;  // Active high grant to agent 1
-output gnt_2 ;  // Active high grant to agent 2
-output gnt_3 ;  // Active high grant to agent 
+input  clock ;
+input  reset ;
+input  req_0 ;
+input  req_1 ;
+input  req_2 ;
+input  req_3 ;
+output gnt_0 ;
+output gnt_1 ;
+output gnt_2 ;
+output gnt_3 ;
 
-// Internal Variables
-reg    gnt_0 ;  // Active high grant to agent 0
-reg    gnt_1 ;  // Active high grant to agent 1
-reg    gnt_2 ;  // Active high grant to agent 2
-reg    gnt_3 ;  // Active high grant to agent 
+reg    gnt_0 ;
+reg    gnt_1 ;
+reg    gnt_2 ;
+reg    gnt_3 ;
 
 parameter  [2:0]  IDLE  = 3'b000;
 parameter  [2:0]  GNT0  = 3'b001;
@@ -1871,16 +1869,16 @@ always
 
 
 fsm_full U_fsm_full(
-clock , // Clock
-reset , // Active high reset
-req_0 , // Active high request from agent 0
-req_1 , // Active high request from agent 1
-req_2 , // Active high request from agent 2
-req_3 , // Active high request from agent 3
-gnt_0 , // Active high grant to agent 0
-gnt_1 , // Active high grant to agent 1
-gnt_2 , // Active high grant to agent 2
-gnt_3   // Active high grant to agent 3
+clock ,
+reset ,
+req_0 ,
+req_1 ,
+req_2 ,
+req_3 ,
+gnt_0 ,
+gnt_1 ,
+gnt_2 ,
+gnt_3
 );
 
 
