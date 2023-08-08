@@ -1,2 +1,2 @@
 # Verilog Learning
-## Bu depo Verilog öğrenimi için oluşturulmuştur.
+## Bu depo verilog öğrenimi için oluşturulmuştur.

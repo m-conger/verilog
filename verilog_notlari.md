@@ -109,6 +109,46 @@ Kopyalama Örneği:
 Eğer operandların bit uzunlukları birbirine eşit değilse, daha kısa olanın soluna sıfırlar eklenir.
 
 
+D-FF Örneği:
+``` verilog
+module d_ff(d, clk, q, q_not);
+input d, clk;
+output q, q_not;
+wire d, clk;
+reg q, q_not;
+
+always @(posedge clk) begin
+    q <= d;
+    q_not <= !d;
+end
+
+endmodule
+```
+
+
+Hello World Örneği:
+``` verilog
+//-----------------------------------------------------------------------
+//
+// Bu benim ilk verilog programım
+// tasarım ismi     : merhaba dünya
+// dosya ismi       : hello_world.v
+// fonksiyon        : bu program ekrana 'hello world' yazdıracaktır
+// kodlayan         : YONGA (Muhammed Conger)
+//
+//-----------------------------------------------------------------------
+
+module hello_world;
+
+initial begin
+    $display ("hello world");
+        #10 $finish;
+end
+
+endmodule
+```
+
+
 ## Kontrol İfadeleri
 ### 1. if-else
 Bir parça kodun yürütülüp yürütülmeyeceğini kontrol eder. Koşul sağlanıyorsa kod yürütülür, değilse kodun diğer kısmı koşulur.
@@ -126,6 +166,99 @@ end
 ```
 
 (Begin ve end, C/C++'taki {} ifadesi gibi davranır. Yani ilgili kısmın çerçevesi denebilir.)
+
+
+First Counter Örneği:
+``` verilog
+//-----------------------------------------------------------------------
+//
+// Bu benim ikinci verilog programım
+// tasarım ismi     : sayıcı
+// dosya ismi       : first_counter.v
+// fonksiyon        : 4-bit yukarı sayıcı
+// kodlayan         : YONGA (Muhammed Conger)
+//
+//-----------------------------------------------------------------------
+
+module first_counter (
+    clock,      // tasarımın saat girişi
+    reset,      // aktif yüksek senkron reset girişi
+    enable,     // sayaç için yukarı seviyede aktif etkinleştirme
+    counter_out // sayacın 4 bit vektör çıkışı
+);              // port listesinin sonu
+
+//--------------- giriş portları -----------------
+input clock;
+input reset;
+input enable;
+
+//--------------- çıkış portları -----------------
+output [3:0] counter_out;
+
+//--------------- giriş portları veri tipleri -----------------
+wire clock;
+wire reset;
+wire enable;
+
+//--------------- çıkış portları veri tipleri -----------------
+reg [3:0] counter_out;
+
+//--------------- başlıyor -----------------
+always @(posedge clock)
+begin : COUNTER // blok adı
+    // şimdi saatin her bir yükselen kenarında reset aktif mi kontrolü yapılacak
+    // eğer aktif ise sayacın çıkışına 4'b0000 yüklenecek
+    if (reset == 1'b1) begin
+        counter_out <= #1 4'b0000;
+    end
+    // eğer enable aktif ise sayaç artacak
+    else if (enable == 1'b1) begin
+        counter_out <= #1 counter_out + 1;
+    end
+end // COUNTER bloğunun sonu
+
+endmodule // counter modülünün sonu
+```
+
+First Counter Testbench Örneği:
+``` verilog
+`include "first_counter.v"
+module first_counter_tb();
+// girişlerin reg, çıkışların wire olarak bildirilmesi gerekmektedir
+reg clock, reset, enable;
+wire [3:0] counter_out;
+
+// tüm değişkenlerin başlangıç değerleri
+initial begin
+    $display ("time/t clk reset enable counter");
+    $monitor ("%g/t %b %b %b %b",
+        $time, clock, reset, enable, counter_out);
+    clock = 1;          // clock ilk değeri
+    reset = 0;          // reset ilk değeri
+    enable = 0;         // enable ilk değeri
+    #5 reset = 1;       // reset belirtimi
+    #10 reset = 0;      // reset'ten çıkış durumu
+    #10 enable = 1;     // enable durumu
+    #100 enable = 0;    // enable'dan çıkış durumu
+    #5 $finish;         // simülasyonu sonlandır
+end
+
+// saat üretici (clock generator)
+always begin
+    #5 clock = ~clock; // her 5 saat darbesinde durum değişimi
+end
+
+// testbench'ten test edilen cihaza (DUT, device under test) bağlantı
+first_counter U_counter (
+clock,
+reset,
+enable,
+counter_out
+);
+
+endmodule
+```
+
 
 ### 2. case
 Case, bir değişkenin birden çok değer için kontrol edilmeye ihtiyacı varsa kullanılır.
@@ -173,6 +306,7 @@ end
 
 endmodule
 ```
+
 
 ### for döngüsü
 Örneğin:
@@ -1716,6 +1850,16 @@ end
 
 ### Binary Encoding Kullanmanın Tam Kodu
 ``` verilog
+//-----------------------------------------------------------------------
+//
+// FSM Full Code with Binary Encoding
+// tasarım ismi     : fsm_full
+// dosya ismi       : fsm_full.v
+// fonksiyon        : bu program verilen FSM arbiter yapısını oluşturacaktır
+// kodlayan         : YONGA (Muhammed Conger)
+//
+//-----------------------------------------------------------------------
+
 module fsm_full(
 clock ,
 reset ,
@@ -1834,6 +1978,16 @@ endmodule
 
 ### Testbench
 ``` verilog
+//-----------------------------------------------------------------------
+//
+// FSM Full Code with Binary Encoding
+// tasarım ismi     : fsm_full_tb
+// dosya ismi       : fsm_full_tb.v
+// fonksiyon        : bu program fsm_full için testbench yapısını oluşturacaktır
+// kodlayan         : YONGA (Muhammed Conger)
+//
+//-----------------------------------------------------------------------
+
 `include "fsm_full.v"
 
 module fsm_full_tb();
