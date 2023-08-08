@@ -1571,7 +1571,7 @@ Durum makineleri durumların şifrelenmesine göre de sınıflandırılabilir. �
 
 
 ### Durum Makinelerinin Modellenmesi
-FSM kodlanırken kombinasyonel ve ardışıl lojik iki farklı always bloğunda olabilir. Her iki şekilde de bir sonraki durum lojiği (next state logic) always bloğunda kombinasyoneldir. Durum yazmaçları (state registers) ve çıkış lojiği (output logic) ise ardışıl lojiktir. Bu ayrıntılar oldukça önemlidir. Bu sayede bir sonraki durum lojiği için asenkron sinyaller FSM'yi beslemeden önce senkronlaştırılabilir. Ayrıca FSM her zaman ayrı bir verilog dosyasında tutulması iyi olacaktır.
+FSM kodlanırken kombinasyonel ve ardışıl lojik iki farklı always bloğunda olabilir. Her iki şekilde de bir sonraki durum lojiği (next state logic) always bloğunda kombinasyoneldir. Durum yazmaçları (state registers) ve çıkış lojiği (output logic) ise ardışıl lojiktir. Bu ayrıntılar oldukça önemlidir. Bu sayede bir sonraki durum lojiği için asenkron sinyaller FSM'yi beslemeden önce senkronlaştırılabilir. Ayrıca FSM'nin her zaman ayrı bir verilog dosyasında tutulması iyi olacaktır.
 
 Parametreler gibi sabit bildirimi kullanmak ya da `'define` (tanımlamak) ile FSM'nin durumlarını tanımlamak kodu daha okunabilir ve daha kolay yönetilebilir yapmaktadır.
 
@@ -1580,4 +1580,313 @@ Parametreler gibi sabit bildirimi kullanmak ya da `'define` (tanımlamak) ile FS
 
 ![Image](https://www.asic-world.com/images/verilog/aribiter_fsm.gif)
 
+
+### Verilog Kodu
+FSM kodu üç bölüm içerir.
+* Encoding (Şifreleme)
+* Combinational (Kombinasyonel)
+* Sequential (Ardışıl)
+
+
+## Encoding Section (Şifreleme Bölümü)
+Birçok şifreleme şekli bulunmaktadır. Bunlardan birkaçı aşağıda verilmiştir;
+* Binary Encoding
+* One Hot Encoding
+* One Cold Encoding
+* Almost One Hot Encoding
+* Almost One Cold Encoding
+* Gray Encoding
+
+
+### One Hot Encoding
+``` verilog
+parameter   [4:0]   IDLE    = 5'b0_0001;
+parameter   [4:0]   GNT0    = 5'b0_0010;
+parameter   [4:0]   GNT1    = 5'b0_0100;
+parameter   [4:0]   GNT2    = 5'b0_1000;
+parameter   [4:0]   GNT3    = 5'b1_0000;
+```
+
+
+### Binary Encoding
+``` verilog
+parameter   [2:0]   IDLE    = 3'b0_000;
+parameter   [2:0]   GNT0    = 3'b0_001;
+parameter   [2:0]   GNT1    = 3'b0_010;
+parameter   [2:0]   GNT2    = 3'b0_011;
+parameter   [2:0]   GNT3    = 3'b1_100;
+```
+
+
+### Gray Encoding
+``` verilog
+parameter   [2:0]   IDLE    = 3'b0_000;
+parameter   [2:0]   GNT0    = 3'b0_001;
+parameter   [2:0]   GNT1    = 3'b0_011;
+parameter   [2:0]   GNT2    = 3'b0_010;
+parameter   [2:0]   GNT3    = 3'b1_110;
+```
+
+
+## Combinational Section (Kombinasyonel Bölüm)
+Bu bölüm fonksiyonlarla, atama ifadeleriyle veya bir `case` ifadesi ile `always` bloğu kullanılarak modellenebilir.
+
+``` verilog
+always @ (state or req_0 or req_1 or req_2 or req_3)
+begin       
+  next_state = 0;
+  case(state)
+    IDLE : if (req_0 == 1'b1) begin
+  	     next_state = GNT0;
+           end else if (req_1 == 1'b1) begin
+  	     next_state= GNT1;
+           end else if (req_2 == 1'b1) begin
+  	     next_state= GNT2;
+           end else if (req_3 == 1'b1) begin
+  	     next_state= GNT3;
+	   end else begin
+  	     next_state = IDLE;
+           end			
+    GNT0 : if (req_0 == 1'b0) begin
+  	     next_state = IDLE;
+           end else begin
+	     next_state = GNT0;
+	  end
+    GNT1 : if (req_1 == 1'b0) begin
+  	     next_state = IDLE;
+           end else begin
+	     next_state = GNT1;
+	  end
+    GNT2 : if (req_2 == 1'b0) begin
+  	     next_state = IDLE;
+           end else begin
+	     next_state = GNT2;
+	  end
+    GNT3 : if (req_3 == 1'b0) begin
+  	     next_state = IDLE;
+           end else begin
+	     next_state = GNT3;
+	  end
+   default : next_state = IDLE;
+  endcase
+end
+```
+
+
+## Sequential Section (Ardışıl Bölüm)
+Bu bölümde modelleme sadece kenar hassasiyetli lojik olan `posedge` veya `negedge` saatli `always` bloğu kullanılarak yapılmak zorundadır.
+
+``` verilog
+always @ (posedge clock)
+begin : OUTPUT_LOGIC
+  if (reset == 1'b1) begin
+    gnt_0 <= #1 1'b0;
+    gnt_1 <= #1 1'b0;
+    gnt_2 <= #1 1'b0;
+    gnt_3 <= #1 1'b0;
+    state <= #1 IDLE;
+  end else begin
+    state <= #1 next_state;
+    case(state)
+        IDLE : begin
+                 gnt_0 <= #1 1'b0;
+                 gnt_1 <= #1 1'b0;
+                 gnt_2 <= #1 1'b0;
+                 gnt_3 <= #1 1'b0;
+	           end
+  	    GNT0 : begin
+  	             gnt_0 <= #1 1'b1;
+  	           end
+        GNT1 : begin
+                 gnt_1 <= #1 1'b1;
+               end
+        GNT2 : begin
+                 gnt_2 <= #1 1'b1;
+               end
+        GNT3 : begin
+                 gnt_3 <= #1 1'b1;
+               end
+     default : begin
+                 state <= #1 IDLE;
+               end
+    endcase
+  end
+end
+```
+
+### İkili Şifreleme Kullanmanın Tam Kodu
+``` verilog
+module fsm_full(
+clock ,         // Clock
+reset ,         // Active high reset
+req_0 ,         // Active high request from agent 0
+req_1 ,         // Active high request from agent 1
+req_2 ,         // Active high request from agent 2
+req_3 ,         // Active high request from agent 3
+gnt_0 ,         // Active high grant to agent 0
+gnt_1 ,         // Active high grant to agent 1
+gnt_2 ,         // Active high grant to agent 2
+gnt_3           // Active high grant to agent 3
+);
+
+// Port declaration here
+input clock ;   // Clock
+input reset ;   // Active high reset
+input req_0 ;   // Active high request from agent 0
+input req_1 ;   // Active high request from agent 1
+input req_2 ;   // Active high request from agent 2
+input req_3 ;   // Active high request from agent 3
+output gnt_0 ;  // Active high grant to agent 0
+output gnt_1 ;  // Active high grant to agent 1
+output gnt_2 ;  // Active high grant to agent 2
+output gnt_3 ;  // Active high grant to agent 
+
+// Internal Variables
+reg    gnt_0 ;  // Active high grant to agent 0
+reg    gnt_1 ;  // Active high grant to agent 1
+reg    gnt_2 ;  // Active high grant to agent 2
+reg    gnt_3 ;  // Active high grant to agent 
+
+parameter  [2:0]  IDLE  = 3'b000;
+parameter  [2:0]  GNT0  = 3'b001;
+parameter  [2:0]  GNT1  = 3'b010;
+parameter  [2:0]  GNT2  = 3'b011;
+parameter  [2:0]  GNT3  = 3'b100;
+
+reg [2:0] state, next_state;
+
+always @ (state or req_0 or req_1 or req_2 or req_3)
+begin  
+  next_state = 0;
+  case(state)
+    IDLE : if (req_0 == 1'b1) begin
+  	            next_state = GNT0;
+           end else if (req_1 == 1'b1) begin
+  	            next_state= GNT1;
+           end else if (req_2 == 1'b1) begin
+  	            next_state= GNT2;
+           end else if (req_3 == 1'b1) begin
+  	            next_state= GNT3;
+	       end else begin
+  	            next_state = IDLE;
+           end		
+    GNT0 : if (req_0 == 1'b0) begin
+  	            next_state = IDLE;
+           end else begin
+	            next_state = GNT0;
+	       end
+    GNT1 : if (req_1 == 1'b0) begin
+  	            next_state = IDLE;
+           end else begin
+	            next_state = GNT1;
+	       end
+    GNT2 : if (req_2 == 1'b0) begin
+  	            next_state = IDLE;
+           end else begin
+	            next_state = GNT2;
+	       end
+    GNT3 : if (req_3 == 1'b0) begin
+  	            next_state = IDLE;
+           end else begin
+	            next_state = GNT3;
+	       end
+      default : next_state = IDLE;
+  endcase
+end
+
+always @ (posedge clock)
+begin : OUTPUT_LOGIC
+  if (reset) begin
+    gnt_0 <= #1 1'b0;
+    gnt_1 <= #1 1'b0;
+    gnt_2 <= #1 1'b0;
+    gnt_3 <= #1 1'b0;
+    state <= #1 IDLE;
+  end else begin
+    state <= #1 next_state;
+    case(state)
+	    IDLE : begin
+                gnt_0 <= #1 1'b0;
+                gnt_1 <= #1 1'b0;
+                gnt_2 <= #1 1'b0;
+                gnt_3 <= #1 1'b0;
+	           end
+  	    GNT0 : begin
+  	            gnt_0 <= #1 1'b1;
+  	           end
+        GNT1 : begin
+                 gnt_1 <= #1 1'b1;
+               end
+        GNT2 : begin
+                 gnt_2 <= #1 1'b1;
+               end
+        GNT3 : begin
+                 gnt_3 <= #1 1'b1;
+               end
+     default : begin
+                 state <= #1 IDLE;
+               end
+    endcase
+  end
+end
+
+endmodule
+```
+
+
+### Testbench
+``` verilog
+`include "fsm_full.v"
+
+module fsm_full_tb();
+reg     clock , reset ;
+reg     req_0 , req_1 , req_2 , req_3 ; 
+wire    gnt_0 , gnt_1 , gnt_2 , gnt_3 ;
+
+initial begin
+  $display("Time\t    R0 R1 R2 R3 G0 G1 G2 G3");
+  $monitor("%g\t    %b  %b  %b  %b  %b  %b  %b  %b", 
+    $time, req_0, req_1, req_2, req_3, gnt_0, gnt_1, gnt_2, gnt_3);
+  clock = 0;
+  reset = 0;
+  req_0 = 0;
+  req_1 = 0;
+  req_2 = 0;
+  req_3 = 0;
+  #10 reset = 1;
+  #10 reset = 0;
+  #10 req_0 = 1;
+  #20 req_0 = 0;
+  #10 req_1 = 1;
+  #20 req_1 = 0;
+  #10 req_2 = 1;
+  #20 req_2 = 0;
+  #10 req_3 = 1;
+  #20 req_3 = 0;
+  #10 $finish;
+end
+
+always
+ #2 clock = ~clock;
+
+
+fsm_full U_fsm_full(
+clock , // Clock
+reset , // Active high reset
+req_0 , // Active high request from agent 0
+req_1 , // Active high request from agent 1
+req_2 , // Active high request from agent 2
+req_3 , // Active high request from agent 3
+gnt_0 , // Active high grant to agent 0
+gnt_1 , // Active high grant to agent 1
+gnt_2 , // Active high grant to agent 2
+gnt_3   // Active high grant to agent 3
+);
+
+
+endmodule
+```
+
+
+## Parameterized Modules (Parametreleştirilmiş Modüller)
 Devam edecek..
