@@ -266,14 +266,14 @@ Case, bir değişkenin birden çok değer için kontrol edilmeye ihtiyacı varsa
 Örneğin:
 ``` verilog
 case (address)
-    0 : $display ("It is 11:40PM");
-    1 : $display ("I am feeling sleepy");
-    2 : $display ("Let me skip this tutorial");
-    default : $display ("Need to complete");
+    0 : $display ("saat 02:44");
+    1 : $display ("yorgun hissediyorsun");
+    2 : $display ("devam etmelisin");
+    default : $display ("hedeflerin için");
 endcase
 ```
 
-(If-else ifadesinde 'else' yoksa veya case ifadesinde 'default' yoksa ve kombinasyonel bir ifade yazacaksanız, sentez aracı "Latch" tercih eder. If-else ve case ifadeleri kombinasyonel lojik için tüm durumların kapsanmasına ihtiyaç duyar.)
+(If-else ifadesinde 'else' yoksa veya case ifadesinde 'default' yoksa ve kombinasyonel bir ifade yazılacak ise sentez aracı "Latch" tercih eder. If-else ve case ifadeleri kombinasyonel lojik için tüm durumların kapsanmasına ihtiyaç duyar.)
 
 ### 3. while döngüsü
 Normalde modellerde pek kullanılmaz ancak testbenchde sıkça kullanılır.
@@ -2146,5 +2146,64 @@ endmodule
 ```
 
 
-## Verilog Sentez Eğitseli (Tutorial)
-Devam edecek..
+## Sentez
+Lojik sentez, yüksek seviyeli tanımlama tasarımını optimize edilmiş kapı seviyesi gösterime dönüştürme işlemidir. Lojik sentez, standart hücre kütüphanesini (cell library) kullanır. Standart hücre kütüphanesi, basit hücrelerden (basit lojik kapılar olan AND, OR, NOR, NOT vb.) veya makro hücrelerden (adder, mux, memory, flip-flop vb.) oluşur. Standart hücrelerin bir araya getirilmiş haline teknoloji kütüphanesi (technology library) denir. Teknoloji kütüphaneleri genel olarak transistör büyüklüğü (130nm, 65nm, 5nm gibi) ile bilinir.
+
+![Image](https://www.asic-world.com/images/verilog/syn_flow.gif)
+
+Bir devre tanımlaması verilog gibi bir donanım tanımlama dili (hardware description language, HDL) ile yazılabilir. Ancak oluşturulan tanımlama zamanlama, alan, test edilebilirlik ve güç bakımından tasarım kısıtları ile çevrelenmiştir.
+
+
+## HDL'in etkisi ve Lojik Sentez
+Yüksek seviyeli tasarımda insan kaynaklı hatalara meyil daha azdır. Çünkü tasarım oldukça soyutlanarak inşa edilmektedir. Yüksek seviyeli tasarımdan kapı seviyesine geçiş sentez araçlarıyla olmaktadır. Tasarımı bir bütün halinde optimize edebilmek için çeşitli algoritmalar kullanılır. Bu durum tasarımcıların tasarımdaki farklı blok stillerinin oluşmasını ve idealin altında (suboptimal) tasarımlardan kaynaklanan problemleri ortadan kaldırır. Lojik sentez araçları teknoloji bağımsız tasarıma izin verir. Tasarımın yeniden kullanılması teknoloji bağımsız tanımlamalarla mümkündür.
+
+
+## Sentezde Desteklenmeyen Yapılar
+| Yapının Tipi                         | Notlar                                                                                               |
+|--------------------------------------|------------------------------------------------------------------------------------------------------|
+| `initial` (başlangıç)                  | Sadece testbench'de kullanılır.                                                                      |
+| `events` (olaylar)                     | Olaylar testbench bileşenlerinin senkronizasyonunu daha hassas yapar.                                |
+| `real` (reel)                          | Reel veri tipi desteklenmez.                                                                         |
+| `time` (zaman)                         | Zaman (`time`) veri tipi desteklenmez.                                                                 |
+| `force` (zorlama) ve `release` (bırakma) | `force` ve `release` veri tipi desteklenmez.                                                             |
+| `assign` ve `deassign`                   | `assign` ve `deassign` `reg` veri tipi desteklenmez. Fakat `wire` veri tipindeki `assign` (atama) desteklenir. |
+| `fork` `join`                            | Aynı etkiyi elde etmek için bloklamayan (nonblocking) atama kullanılmalıdır.                         |
+| primitives (temeller)                | Sadece kapı seviyesi temeller desteklenir.                                                           |
+| table (tablo)                        | UDP ve tablolar desteklenmez.                                                                        |
+
+
+Yukarıda belirtilen yapıları içeren herhangi bir kod sentezlenemez (gelişmiş bazı sentez araçlarında durum değişiklik gösterebilir). Ayrıca sentezlenebilir yapılar içerisindeki kötü kodlama da senteze engel olabilir. Örneğin bir `reg` (register, yazmaç) değişkeninin birden çok `always` bloğu tarafından sürülmesi senteze engel olabilir veya hatalı bir sentez sonucu ortaya çıkarabilir.
+
+
+## Sentezde Desteklenen Yapılar
+| Yapı Tipi                                        | Anahtar Sözcük veya Açıklama                   | Not                                                                        |
+|--------------------------------------------------|------------------------------------------------|----------------------------------------------------------------------------|
+| Ports                                            | `input`, `output`, `inout`                           | `input` sadece IO seviyesinde kullanılmalıdır.                               |
+| `parameter`                                        | `parameter`                                      | Böylece tasarım ölçeklenebilir bir hal alır.                               |
+| Module Definition (modül tanımlama)              | module                                         |                                                                            |
+| Signals and Veriables (sinyaller ve değişkenler) | `wire`, `reg`, `tri`                                 | Vektörlere izin verilir.                                                   |
+| Instantiation (örnekleme)                        | modül örneklemeleri / temel kapı örneklemeleri |                                                                            |
+| `function` and `task` (fonksiyon ve görevler)        | `function`, `task`                                 | Zamanlama yapıları reddedilir.                                             |
+| Procedural (prosedürel)                          | `always`, `if`, `else`, `case`, `casex`, `casez`           | `initial` (başlangıç) desteklenmez.                                          |
+| Procedural Blocks                                | `begin`, `end`, named blocks, `disable`              | İsimlendirilmiş blokların etkisizleştirilmesine izin verilir.              |
+| data flow (veri akışı)                           | `assign` (atama)                                 | Gecikme bilgisi ihmal edilir.                                              |
+| Named Blocks (isimlendirilmiş bloklar)           | `disable` (etkisizleştirmek)                     | İsimlendirilmiş blokların etkisizleştirilmesi desteklenir.                 |
+| Loops (döngüler)                                 | `for`, `while`, `forever`                            | `while` ve `forever` döngüleri `@(posedge clk)` veya `@(negedge clk)` içermelidir. |
+
+
+## Verilog Kodlama Stili
+Şimdiye kadarki çalışalarda bir kodlama stili empoze edilmiştir. Tüm firmaların kendilerine ait kodlama ilkeleri ve bu kodlama ilkelerini kontrol eden linters benzeri araçları vardır.
+
+Kısa Bir İlkeler Listesi;
+* Sinyal ve değişkenler için anlamlı isimler kullanın.
+* Aynı `always` bloğunda seviye ve kenar hassasiyetli elemanları karıştırmayın.
+* Pozitif ve negatif kenar tetiklemeli flip-flop'ları karıştırmaktan kaçının.
+* Lojik yapıları optimize etmek için parantez kullanın.
+* Basit çoklu lojik (combo logic) için sürekli atama ifadeleri kullanın.
+* Ardışıl için tıkamayan (nonblocking) ve çoklu lojik için tıkayan (bloklayan) yapı kullanın.
+* Aynı `always` bloğunda tıkayan (blocking) ve tıkamayan (nonblocking) atamaları karıştırmayın.
+* Aynı değişkende çoklu atama olup olmadığına dikkat edin.
+* `if`-`else` veya `case` ifadelerini açıkça tanımlayın.
+
+
+## Verilog PLI (Programming Language Interface, Programlama Dili Arayüzü)
