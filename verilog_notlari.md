@@ -2207,3 +2207,4 @@ Kısa Bir İlkeler Listesi;
 
 
 ## Verilog PLI (Programming Language Interface, Programlama Dili Arayüzü)
+Devam edecek..
