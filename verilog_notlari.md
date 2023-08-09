@@ -2207,4 +2207,61 @@ Kısa Bir İlkeler Listesi;
 
 
 ## Verilog PLI (Programming Language Interface, Programlama Dili Arayüzü)
+Verilog PLI, C ve C++ fonksiyonlarını verilog kodundan çağıran bir mekanizmadır. Verilog'ta fonksiyon çağırma, sistem çağrısı (system call) olarak adlandırılır. Yerleşik bir sistem çağrısı için `$display`, `$stop` ve `$random` örnek olarak verilebilir. PLI kullanıcıya kendi sistem çağrılarını oluşturmasına izin verir.
+
+Örneğin;
+* Güç analizi (power analysis)
+* Kod kaplama araçları (code coverage tools)
+* Verilog simülasyon veri yapısını daha etkin gecikmelerle değiştirme (modifiying the verilog simulation data structure - more accurate delays)
+* Özel çıkış görüntüleri (custom output displays)
+* Birlikte simülasyon (co-simulation)
+* Tasarım hata ayıklama araçları (design debug utilities)
+* Simülasyon analizi (simulation analysis)
+* Simülasyonu hızlandırmak için C modeli arayüz (C-model interface to accelerate simulation)
+* Testbench modelleme
+
+PLI'nin bu uygulamaları gerçekleştirebilmesi için C kodunun verilog simülatörünün iç veri yapısına erişebilmesi gerekir. Bu durumu sağlamak için verilog, PLI ACC rutinlerini (erişim rutinleri) desteklemelidir. İkinci bir rutin kümesine de TF (task & function, görev ve fonksiyon) rutinleri adı verilir. TF ve ACC, PLI 1.0 rutinleridir, çok büyüktür ve eskidir. Son rutin kümesi ise en son sürüm verilog ile sunulmaktadır. Örneğin verilog 2001 için ilgili rutin kümesine VPI rutinleri denir ve daha küçüktür. VPI rutinleri için ilgili PLI versiyonu 2.0'dır.
+
+
+## PLI Nasıl Çalışır?
+* Fonksiyonlar C/C++ ile yazılır.
+* Yazılan fonksiyonların paylaşılmış kütüphanelere dönüştürülmesi için derlenmelidir. Artık fonksiyonlar verilog için kullanılmak üzere hazırdır.
+* Genellikle testbench'te kullanılacaktır.
+* Simülatör, verilog kodunun derlenmesi sürecinde C/C++ fonksiyonlarının detaylarını simülasyon alanına gönderecektir. Bu duruma linking (bağlama) adı verilir. Her bir simülatör, C/C++ fonksiyonlarının simülatöre nasıl bağlanacağını kendi ilkelerine göre gerçekleştirir.
+* Bir kez bağlantı kurulduktan sonra artık simülatör verilog simülasyonundaki gibi çalıştırılabilir.
+
+![Image](https://www.asic-world.com/images/verilog/pli_flow.gif)
+
+Verilog kodu simülatör tarafından gerçekleştirilirken simülatör, kullanıcı tanımlı sistem görevleriyle karşılaştığında ($ ile başlayan anahtar kelimeler) yürütme kontrolü PLI rutinine, fonsiyonuna (C/C++) geçer.
+
+### PLI Hello World
+Ekrana "hello world" yazdıran hello adında bir fonksiyon tanımlanacak olursa aşağıdaki örnekte olduğu gibi bir bağlama (linking) gerçekleştirilebilir.
+
+
+C kodu
+``` C
+#include <stdio.h>
+
+void hello () {
+    printf("\nHello World\n");
+}
+```
+
+Verilog kodu
+``` verilog
+// 
+module hello_pli ();
+
+initial begin
+    $hello;
+     #10    $finish;
+end
+
+endmodule
+```
+
+Verilen örnek oldukça basit ve pratik amaçlar için iyi değildir. Ayrıca hiçbir standart PLI fonksiyonu da (ACC, TF, VPI gibi) kullanılmamıştır.
+
+
+## Verilog 2001 ile Gelen Yenilikler
 Devam edecek..
