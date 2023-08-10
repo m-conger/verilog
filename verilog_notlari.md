@@ -1,5 +1,7 @@
-# VERİLOG NOTLARI
+# Verilog Notları
+İçerik giriş-orta seviye düzeyindedir. İyi anlaşılabilmesi için lojik tasarım ve temel bilgisayar mimarisi konularının özümsenmiş olması faydalı olacaktır. Yaklaşık 2500 satır markdown'dan oluşan bu eğitsel, herhangi bir donanım tanımlama dili bilgisi bulunmayan biri için 20 günlük bir çalışma ile tamamlanabilir halde, öz olarak işlenmiştir. Öğrenim sürecinde donanım tanımlama dillerindeki işleyiş ile yazılım dillerinin işleyişi arasında benzerlik veya ilişki kurmamak sağlıklı bir öğrenim sağlayacaktır.
 
+_Muhammed Conger_
 
 ## Tasarım Modelleri
 Verilog ile 3 tür modelde tasarım yapılabilir.
@@ -38,7 +40,7 @@ output  gnt_0;
 output  gnt_1;
 ```
 
-Bu örnekte sadece iki tip port vardır. Giriş ve çıkış portları. Ancak gerçek hayatta bi-directional (çift yönlü) portlar sıklıkla kullanılır. Verilog'ta çift yönlü portlar tanımlamak için `inout` kullanılır.
+Bu örnekte sadece iki tip port vardır. Giriş ve çıkış portları. Ancak gerçek hayatta bi-directional (çift yönlü) portlar sıklıkla kullanılır. Verilog'da çift yönlü portlar tanımlamak için `inout` kullanılır.
 
 Örneğin:
 ``` verilog
@@ -56,7 +58,7 @@ inout [7:0] adress; // anlamlı bit en solda olacak şekilde sağdan sola doğru
 
 
 ## Veri Tipleri
-Temelde bir driver (sürücü= içerisindeki elektronların gidip geldiği bir yapıdır. Bir değer saklayabilir veya iki noktayı birbirine bağlayabilir. Değer saklayabilen tipe verilog'ta reg (register, yazmaç), iki noktayı birbirine bağlayan tipe ise verilog'ta wire (tel) denir.
+Temelde bir driver (sürücü= içerisindeki elektronların gidip geldiği bir yapıdır. Bir değer saklayabilir veya iki noktayı birbirine bağlayabilir. Değer saklayabilen tipe verilog'da reg (register, yazmaç), iki noktayı birbirine bağlayan tipe ise verilog'da wire (tel) denir.
 
 Örneğin:
 ``` verilog
@@ -1260,7 +1262,7 @@ end
 endmodule
 ```
 
-Yukarıdaki örnekte her iki blok da aynı zamanda gerçekleştiğinden b'nin değerinin ne olduğunu söylemek zordur. Yarış durumu verilog'ta sıkça olan bir olaydır.
+Yukarıdaki örnekte her iki blok da aynı zamanda gerçekleştiğinden b'nin değerinin ne olduğunu söylemek zordur. Yarış durumu verilog'da sıkça olan bir olaydır.
 
 
 ## İsimlendirilmiş Bloklar
@@ -1609,7 +1611,7 @@ module counter_tb;
 endmodule
 ```
 
-Bir başlangıç (initial) bloğu verilog'ta sadece bir kez gerçekleştirilir. Böylece simülator `clk`, `reset` ve `enable` değerlerini 0 olarak atar.
+Bir başlangıç (initial) bloğu verilog'da sadece bir kez gerçekleştirilir. Böylece simülator `clk`, `reset` ve `enable` değerlerini 0 olarak atar.
 
 
 ## Bellek Modelleme
@@ -2207,7 +2209,7 @@ Kısa Bir İlkeler Listesi;
 
 
 ## Verilog PLI (Programming Language Interface, Programlama Dili Arayüzü)
-Verilog PLI, C ve C++ fonksiyonlarını verilog kodundan çağıran bir mekanizmadır. Verilog'ta fonksiyon çağırma, sistem çağrısı (system call) olarak adlandırılır. Yerleşik bir sistem çağrısı için `$display`, `$stop` ve `$random` örnek olarak verilebilir. PLI kullanıcıya kendi sistem çağrılarını oluşturmasına izin verir.
+Verilog PLI, C ve C++ fonksiyonlarını verilog kodundan çağıran bir mekanizmadır. Verilog'da fonksiyon çağırma, sistem çağrısı (system call) olarak adlandırılır. Yerleşik bir sistem çağrısı için `$display`, `$stop` ve `$random` örnek olarak verilebilir. PLI kullanıcıya kendi sistem çağrılarını oluşturmasına izin verir.
 
 Örneğin;
 * Güç analizi (power analysis)
@@ -2264,4 +2266,77 @@ Verilen örnek oldukça basit ve pratik amaçlar için iyi değildir. Ayrıca hi
 
 
 ## Verilog 2001 ile Gelen Yenilikler
-Devam edecek..
+Verilog 2001'de değişikliklerin birçoğu diğer dillerden alınmıştır. Örneğin generate, configuration ve file operation VHDL'den alınmıştır.
+
+Bazı Yenilikler
+``` verilog
+// --------------------------------------------------------------------------
+
+// Sensitive List'te or Yerine Virgül Kullanma
+
+// Verilog 1995
+always @(a or b or c)
+always @(posedge clk or posedge reset)
+
+// Verilog 2001
+always @(a, b, c)
+always @(posedge clk, posedge reset)
+
+// --------------------------------------------------------------------------
+// Kombinasyonel Lojik için Sensitive List
+
+// Verilog 1995
+always @(a or b or c)
+
+// Verilog 2001
+always @(*) // "*" ile tümünü alınabilir.
+
+// --------------------------------------------------------------------------
+
+// Verilog 1995'te varsayılan veri tipi net için genişlik her zaman 1 bit iken verilog 2001'de ise genişlik otomatik olarak düzenlenir.
+
+// --------------------------------------------------------------------------
+
+// Verilog 2001 ile yeni operatörler eklenmiştir.
+
+// <<<: işaretli veri tipleri için sola kaydırma
+// >>>: işaretli veri tipleri için sağa kaydırma
+//  **: üstel kuvvet
+
+// --------------------------------------------------------------------------
+
+// Çok Boyutlu Dizi (multi-dimension array)
+
+// Verilog 1995 değişkenlerin tek boyutlu dizilerine izin verirken verilog 2001 iki veya daha yüksek boyutlu değişken ve net veri tipi dizilerine izin verir.
+
+// Verilog 2001, dizilerin içindeki bit ve bölüm seçimine izin verir.
+
+// Verilog 2001, indekslenmiş vektör bölümü seçimine izin vermektedir.
+
+// --------------------------------------------------------------------------
+
+// Yeniden Girişli Görevler ve Özyineli Fonksiyonlar
+// (Re-entrant Task and Recursive Functions)
+
+// Verilog 2001 automatic adlı yeni bir anahtar sözcük sunar. Bu anahtar sözcük bir göreve eklendiğinde görevi yeniden girişli (re-entrant) yapar. automatic ile bildirilmiş tüm görevler her bir koşut zamanlı giriş için dinamik olarak tahsis edilir. automatic anahtar sözcüğü ile eklenmiş bir fonksiyona özyineli (recursive) denir.
+
+// --------------------------------------------------------------------------
+
+// Satır İsim ile Parametre Gönderme
+// (In-line Parameter Passing By Name)
+
+// Verilog 1995, bir modülde bildirilmiş parametreleri 2 şekilde geçersiz kılabilir (override). Bunlar defparam ve "#" kullanmaktır.
+
+// Verilog 2001 de ise yeni bir yol eklenmiş ve port bağlantısı isim ile kurulmuştur. "#" işareti yine kullanılarak bu kez parametrelerin pozisyonları yerine isimleriyle geçersiz kılma işlemi mümkün hale gelmiştir.
+```
+
+## Derleyici Yönergeleri (Compiler Directives)
+Derleyici yönergesi <`'`> işareti ile bildirilir. Bir yönerge bildirildiği noktadan başka bir yönerge üstüne gelene kadar ve dosya sınırları çerçevesinde etkindir. Derleyici yönergeleri kaynak betimlemesinin herhangi bir yerinde görebilir. Fakat bir modül biriminin dışında olması gerekir.
+
+### Bazı Derleyici Yönergeleri
+* `'include` (ekleme)
+* `'define` (tanımlama)
+* `'undef` (tanımı sil)
+* `'ifdef` (eğer tanımlıysa)
+* `'timescale` (zaman ölçeği)
+* `'resetall` (hepsini sıfırla)
